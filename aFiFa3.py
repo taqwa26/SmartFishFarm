@@ -10,11 +10,13 @@ from telepot.delegate import (
     per_chat_id, create_open, pave_event_space, include_callback_query_chat_id)
 
 t = time.localtime()
-current_time = time.strftime("%H:%M", t)
-(h, m) = current_time.split(':')
-result = int(h) * 3600 + int(m) * 60
-print (current_time)
-print (result)
+
+setTime1 = '2:12'
+stat1 = 0
+setTime2 = '2:12'
+stat2 = 0
+setTime3 = '2:12'
+stat3 = 0
 
 GPIO.setwarnings(False)
 
@@ -91,25 +93,21 @@ class Lover(telepot.helper.ChatHandler):
         self._editor = telepot.helper.Editor(self.bot, sent)
         self._edit_msg_ident = telepot.message_identifier(sent)
     
-    def _propose1(self):
-        sent = self.sender.sendMessage('Apa yang ingin anda *atur?', reply_markup=self.keyboard1)
-        self._editor = telepot.helper.Editor(self.bot, sent)
-        self._edit_msg_ident = telepot.message_identifier(sent)
+    """
+    def _propose_time(self):
+        current_time = time.strftime("%H:%M", t)
+        (h, m) = current_time.split(':')
+        result = int(h) * 3600 + int(m) * 60
         
-    def _propose2(self):
-        sent = self.sender.sendMessage('Kolam mana yang ingin anda beri pakan?', reply_markup=self.keyboard2)
-        self._editor = telepot.helper.Editor(self.bot, sent)
-        self._edit_msg_ident = telepot.message_identifier(sent)
+        (h, m) = setTime1.split(':')
+        timeklm1 = int(h) * 3600 + int(m) * 60
         
-    def _propose3(self):
-        sent = self.sender.sendMessage('Kolam mana yang ingin anda atur *penjadwalan pakannya?', reply_markup=self.keyboard3)
-        self._editor = telepot.helper.Editor(self.bot, sent)
-        self._edit_msg_ident = telepot.message_identifier(sent)
-    
-    def _propose4(self):
-        sent = self.sender.sendMessage('Kolam mana yang ingin anda atur *dosis pakannya?', reply_markup=self.keyboard4)
-        self._editor = telepot.helper.Editor(self.bot, sent)
-        self._edit_msg_ident = telepot.message_identifier(sent)
+        (h, m) = setTime2.split(':')
+        timeklm2 = int(h) * 3600 + int(m) * 60
+        
+        (h, m) = setTime3.split(':')
+        timeklm3 = int(h) * 3600 + int(m) * 60
+    """
 
     def _cancel_last(self):
         if self._editor:
@@ -135,28 +133,47 @@ class Lover(telepot.helper.ChatHandler):
         elif query_data == 'setting':
             self.bot.answerCallbackQuery(query_id, text='Ok. Pertanyaan berikutnya...')
             self._cancel_last()
-            self._propose1()
+            sent = self.sender.sendMessage('Apa yang ingin anda *atur?', reply_markup=self.keyboard1)
+            self._editor = telepot.helper.Editor(self.bot, sent)
+            self._edit_msg_ident = telepot.message_identifier(sent)
             
         elif query_data == 'pakan':
             self.bot.answerCallbackQuery(query_id, text='Ok. Pertanyaan berikutnya...')
             self._cancel_last()
-            self._propose2()
+            sent = self.sender.sendMessage('Kolam mana yang ingin anda beri pakan?', reply_markup=self.keyboard2)
+            self._editor = telepot.helper.Editor(self.bot, sent)
+            self._edit_msg_ident = telepot.message_identifier(sent)
             
         elif query_data == 'waktu':
             self.bot.answerCallbackQuery(query_id, text='Ok. Pertanyaan berikutnya...')
             self._cancel_last()
-            self._propose3()
+            sent = self.sender.sendMessage('Kolam mana yang ingin anda atur *penjadwalan pakannya?', reply_markup=self.keyboard3)
+            self._editor = telepot.helper.Editor(self.bot, sent)
+            self._edit_msg_ident = telepot.message_identifier(sent)
             
         elif query_data == 'dosis':
             self.bot.answerCallbackQuery(query_id, text='Ok. Pertanyaan berikutnya...')
             self._cancel_last()
-            self._propose4()
+            sent = self.sender.sendMessage('Kolam mana yang ingin anda atur *dosis pakannya?', reply_markup=self.keyboard4)
+            self._editor = telepot.helper.Editor(self.bot, sent)
+            self._edit_msg_ident = telepot.message_identifier(sent)
             
         # ==pemberian pakan==
         
         elif query_data == 'pknk1':
-            self.bot.answerCallbackQuery(query_id, text='Ok. Pemberian pakan pada kolam 1 akan dilakukan...')
-            self._cancel_last()
+            if setTime1 == 'null' :
+                self.bot.answerCallbackQuery(query_id, text='Ok. Pemberian pakan pada kolam 1 akan dilakukan...')
+                self._cancel_last()
+                #!! kasi pakan, kamera jalan,
+                stat1 = 1
+                self.sender.sendMessage('Pemberian pakan pada kolam 1 telah selesai \nketikkan perintah /dokumentasi untuk mendapat rekaman video..')
+                self.close()
+            else :
+                if stat1 == 0 :
+                    self.bot.answerCallbackQuery(query_id, text='Peringatan !!!')
+                    self._cancel_last()
+                    self.sender.sendMessage('Pemberian pakan pada kolam 1 Telah dijadwlkan pada pukul' + setTime1 + '\nketikkan perintah /force1 untuk memberikan pakan sekarang juga..')
+                    self.close()
             
         else:
             self.bot.answerCallbackQuery(query_id, text='Ok. Tapi aku akan terus bertanya.')
