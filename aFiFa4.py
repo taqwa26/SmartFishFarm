@@ -5,7 +5,7 @@ import sys
 import telepot
 import telepot.helper
 from telepot.loop import MessageLoop
-from telepot.namedtuple import InlineKeyboardMarkup, InlineKeyboardButton
+from telepot.namedtuple import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
 from telepot.delegate import (
     per_chat_id, create_open, pave_event_space, include_callback_query_chat_id)
 
@@ -82,6 +82,32 @@ class Lover(telepot.helper.ChatHandler):
                    InlineKeyboardButton(text='Semua Kolam', callback_data='dkolamAll')], [
                    InlineKeyboardButton(text='Kembali', callback_data='kembali')
                ]])
+    keyboard5 = ReplyKeyboardMarkup(keyboard=[[
+                   KeyboardButton(text="1:00", callback_data='1'),
+                   KeyboardButton(text="2:00", callback_data='2'),
+                   KeyboardButton(text="3:00", callback_data='3'),
+                   KeyboardButton(text="4:00", callback_data='4'),
+                   KeyboardButton(text="5:00", callback_data='5'),
+                   KeyboardButton(text="6:00", callback_data='6'),
+                   KeyboardButton(text="7:00", callback_data='7'),
+                   KeyboardButton(text="8:00", callback_data='8')],[
+                   KeyboardButton(text="9:00", callback_data='9'),
+                   KeyboardButton(text="10:00", callback_data='10'),
+                   KeyboardButton(text="11:00", callback_data='11'),
+                   KeyboardButton(text="12:00", callback_data='12'),
+                   KeyboardButton(text="13:00", callback_data='13'),
+                   KeyboardButton(text="14:00", callback_data='14'),
+                   KeyboardButton(text="15:00", callback_data='15'),
+                   KeyboardButton(text="16:00", callback_data='16')],[
+                   KeyboardButton(text="17:00", callback_data='17'),
+                   KeyboardButton(text="18:00", callback_data='18'),
+                   KeyboardButton(text="19:00", callback_data='19'),
+                   KeyboardButton(text="20:00", callback_data='20'),
+                   KeyboardButton(text="21:00", callback_data='21'),
+                   KeyboardButton(text="22:00", callback_data='22'),
+                   KeyboardButton(text="23:00", callback_data='23'),
+                   KeyboardButton(text="24:00", callback_data='0')
+               ]])
 
     def __init__(self, *args, **kwargs):
         super(Lover, self).__init__(*args, **kwargs)
@@ -157,6 +183,11 @@ class Lover(telepot.helper.ChatHandler):
             sent = self.sender.sendMessage('Kolam mana yang ingin anda atur penjadwalan pakannya?', reply_markup=self.keyboard3)
             self._editor = telepot.helper.Editor(self.bot, sent)
             self._edit_msg_ident = telepot.message_identifier(sent)
+            
+        elif query_data == 'wkolam1':
+            self.bot.answerCallbackQuery(query_id, text='Penjadwalan akan diset ke waktu terpilih')
+            self._cancel_last()
+            sent = self.sender.sendMessage('Silhkan pilih waktu yang diinginkan.. ', reply_markup=self.keyboard5)
             
         elif query_data == 'dosis':
             self.bot.answerCallbackQuery(query_id, text='Ok. Pertanyaan berikutnya...')
