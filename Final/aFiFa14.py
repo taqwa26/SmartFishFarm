@@ -41,7 +41,9 @@ CHATID = 1137202289
 
 #set schedul/jadwal pencitraan
 now = datetime.datetime.now()
-schedule = now.hour
+schedule = now.hour # time schedule citradigital
+t = now.strftime('%d-%m-%Y di jam %H:%M:%S') # time sistem gangguan
+t1 = now.strftime('%d-%m-%Y | %H:%M:%S') # time sistem saat booting
 
 jadwal_1 = 9 # jadwal pakan
 jadwal_2 = 9
@@ -57,6 +59,8 @@ status_3 = False
 status_4 = False # status supaya tidak error untuk menu status
 status_5 = False # status apabila ada proses yang berjalan misal : memberi pakan, ambil video ##-->belum terpakai
 status_6 = False # status apakah video dokumentasi mau dikirimkan atau tidak
+status_7 = False # status apakah telh terjadi gangguan sinyal dan membuat sistem beralih ke mode offline
+status_8 = True # status apakah sistem baru booting atau tidak
 
 
 statusP_1 = False # status pakan apakah sudah? belum?
@@ -1240,18 +1244,26 @@ bot = telepot.DelegatorBot(TOKEN, [
 ])
 MessageLoop(bot).run_as_thread()
 print('Listening ...')
-bootingdown  = 'Sistem BootingUp...\n'
-bot.sendMessage(CHATID, bootingdown, parse_mode='html')
-bootingup = 'Seluruh Pengaturan Telah Diset Default \n'
-bot.sendMessage(CHATID, bootingup, parse_mode='html')
 
 #while 1: <--sama dengan true
 while True:
     
     try:
-        bot.sendMessage(CHATID, 'Ingin Aku mengirimkan Video Dokumentasinya ?..')        
+                       
+        if status_7 :
+            status_7 = False
+            bot.sendMessage(CHATID, 'Sistem sebelumnya mengalami gangguan sinyal pada '+t+' sampai pesan ini terkirim membuat sistem melakuakan beberapa tindakan secara otomatis, harap untuk memeriksa status kolam anda')        
 
         now = datetime.datetime.now()
+        t = now.strftime('%d-%m-%Y di jam %H:%M:%S')
+        
+        if status_8 :
+            bootingdown  = 'Sistem BootingUp... '+t1+'\n'
+            bot.sendMessage(CHATID, bootingdown, parse_mode='html')
+            bootingup = 'Seluruh Pengaturan Telah Diset <i>Default</i> \n'
+            bot.sendMessage(CHATID, bootingup, parse_mode='html')
+            status_8 = False
+            
         print(now.hour,":",now.minute)
         print(jadwal_1,":",jadwal_2,":",jadwal_3,":",takar_1,":",takar_2,":",takar_3,"||",status_1,":",status_2,":",status_3,"||",statusP_1,":",statusP_2,":",statusP_3)
         
@@ -1568,6 +1580,8 @@ while True:
     except:
         
         #pass --> doing nothing on exception
+        print('Gangguan Sinyal')
+        status_7 = True
         now = datetime.datetime.now()
         print(now.hour,":",now.minute)
         print(jadwal_1,":",jadwal_2,":",jadwal_3,":",takar_1,":",takar_2,":",takar_3,"||",status_1,":",status_2,":",status_3,"||",statusP_1,":",statusP_2,":",statusP_3)
