@@ -4,7 +4,7 @@ import cv2
 #Import Numpy
 import numpy as np
 #Baca gambar
-img = cv2.imread('ambilGambar.jpg')
+img = cv2.imread('ambilGambar3.jpg')
 #img = cv2.imread('ambilGambar.jpg')
 #Konversi RGB ke HSV
 hsv = cv2.cvtColor(img,cv2.COLOR_BGR2HSV)
