@@ -219,6 +219,14 @@ class Lover(telepot.helper.ChatHandler):
             bot.sendMessage(chat_id, "Maaf ini adalah bot pribadi. Akses ditolak!")
             self.close()
         
+        troubleshoot = msg['text']
+        if (troubleshoot == 'troubleshoot'):
+            shoot = str(status_1)+' : '+str(status_2)+' : '+str(status_3)+' : '+str(status_4)+' : '+str(status_5)+' : '+str(status_6)+' : '+str(status_7)+' : '+str(status_8)+' : '+str(statusO_1)+' : '+str(statusO_2)+' : '+str(statusO_3)
+            sent = self.sender.sendMessage(shoot)
+            self._editor = telepot.helper.Editor(self.bot, sent)
+            self._edit_msg_ident = telepot.message_identifier(sent)
+            self.close()
+        
         print('pesan masuk')
         if (status_5) :
             sent = self.sender.sendMessage('Tunggu sebentar.. aku sedang melakukan pemrosesan otomatis atau proses sebelumnya belum selasai. \n\n Kirimi aku pesan beberapa saat lagi..', parse_mode='html')
@@ -374,7 +382,7 @@ class Lover(telepot.helper.ChatHandler):
                 status_5 = True
                 text = 'Pemberian Pakan secara terjadwal pada kolam '                
                 # ambil Video
-                pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 takeVideo.mp4 -y'
+                pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 dokumentasiVideo.mp4 -y'
                 p = Popen(shlex.split(pipeline), stdin=DEVNULL, stdout=DEVNULL, stderr=STDOUT)
                 time.sleep(5) #delay mempersiapkan kamera
                 if (status_1) :
@@ -1063,10 +1071,11 @@ class Lover(telepot.helper.ChatHandler):
             self._cancel_last()
             if(status_5 == False) :
                 self.bot.answerCallbackQuery(query_id, text='Ok. Perintah Dijalankan..')
+                sent = self.sender.sendMessage('Pemberian pakan sedang berjalan')
                 status_5 = True
                 text = 'Pemberian Pakan pada Kolam '
                 # ambil Video
-                pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 takeVideo.mp4 -y'
+                pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 dokumentasiVideo.mp4 -y'
                 p = Popen(shlex.split(pipeline), stdin=DEVNULL, stdout=DEVNULL, stderr=STDOUT)
                 time.sleep(5) #delay mempersiapkan kamera
                 if (status_1):
@@ -1101,11 +1110,11 @@ class Lover(telepot.helper.ChatHandler):
             self._cancel_last()
             if (status_5 == False) :
                 self.bot.answerCallbackQuery(query_id, text='Ok. Perintah Dijalankan..')
-                self.bot.sender.sendMessage('Pemberian pakan sedang berjalan')
+                sent = self.sender.sendMessage('Pemberian pakan sedang berjalan')
                 status_5 = True
                 text = 'Pemberian Pakan pada Kolam '
                 # ambil Video
-                pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 takeVideo.mp4 -y'
+                pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 dokumentasiVideo.mp4 -y'
                 p = Popen(shlex.split(pipeline), stdin=DEVNULL, stdout=DEVNULL, stderr=STDOUT)
                 time.sleep(5) #delay mempersiapkan kamera
                 if (status_1):
@@ -1137,11 +1146,11 @@ class Lover(telepot.helper.ChatHandler):
             self._cancel_last()
             if (status_5 == False) :
                 self.bot.answerCallbackQuery(query_id, text='Ok. Perintah Dijalankan..')
-                self.bot.sender.sendMessage('Pemberian pakan sedang berjalan')
+                sent = self.sender.sendMessage('Pemberian pakan sedang berjalan')
                 status_5 == True
                 text = 'Pemberian Pakan pada Kolam '
                 # ambil Video
-                pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 takeVideo.mp4 -y'
+                pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 dokumentasiVideo.mp4 -y'
                 p = Popen(shlex.split(pipeline), stdin=DEVNULL, stdout=DEVNULL, stderr=STDOUT)
                 time.sleep(5) #delay mempersiapkan kamera
                 if (status_1):
@@ -1283,6 +1292,9 @@ while True:
             schedule = schedule + 1
             if (schedule == 24):
                 schedule = 0
+                statusP_1 = False
+                statusP_2 = False
+                statusP_3 = False
 
             status_5 = True
             # ambil Gambar
@@ -1340,7 +1352,7 @@ while True:
                     bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 1 sedang berjalan..', reply_markup = keyboardO_2)
                     status_5 = True
                     # ambil Video
-                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 takeVideo.mp4 -y'
+                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 dokumentasiVideo.mp4 -y'
                     p = Popen(shlex.split(pipeline), stdin=DEVNULL, stdout=DEVNULL, stderr=STDOUT)
                     time.sleep(5) #delay mempersiapkan kamera
                     # motor servo jalan berdasarkan kolam 1 takar_1
@@ -1365,7 +1377,7 @@ while True:
                     bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 2 sedang berjalan..', reply_markup = keyboardO_2)
                     status_5 = True
                     # ambil Video
-                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 takeVideo.mp4 -y'
+                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 dokumentasiVideo.mp4 -y'
                     p = Popen(shlex.split(pipeline), stdin=DEVNULL, stdout=DEVNULL, stderr=STDOUT)
                     time.sleep(5) #delay mempersiapkan kamera
                     # motor servo jalan berdasarkan kolam 2 takar_2
@@ -1390,7 +1402,7 @@ while True:
                     bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 3 sedang berjalan..', reply_markup = keyboardO_2)
                     status_5 = True
                     # ambil Video
-                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 takeVideo.mp4 -y'
+                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 dokumentasiVideo.mp4 -y'
                     p = Popen(shlex.split(pipeline), stdin=DEVNULL, stdout=DEVNULL, stderr=STDOUT)
                     time.sleep(5) #delay mempersiapkan kamera
                     # motor servo jalan berdasarkan kolam 3 takar_3
@@ -1418,7 +1430,7 @@ while True:
                     bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 1 dan 2 sedang berjalan..', reply_markup = keyboardO_2)
                     status_5 = True
                     # ambil Video
-                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 takeVideo.mp4 -y'
+                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 dokumentasiVideo.mp4 -y'
                     p = Popen(shlex.split(pipeline), stdin=DEVNULL, stdout=DEVNULL, stderr=STDOUT)
                     time.sleep(5) #delay mempersiapkan kamera
                     # motor servo jalan berdasarkan kolam dan takar_
@@ -1445,7 +1457,7 @@ while True:
                     bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 1 sedang berjalan..', reply_markup = keyboardO_2)
                     status_5 = True
                     # ambil Video
-                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 takeVideo.mp4 -y'
+                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 dokumentasiVideo.mp4 -y'
                     p = Popen(shlex.split(pipeline), stdin=DEVNULL, stdout=DEVNULL, stderr=STDOUT)
                     time.sleep(5) #delay mempersiapkan kamera
                     # motor servo jalan berdasarkan kolam dan takar_
@@ -1470,7 +1482,7 @@ while True:
                     bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 2 sedang berjalan..', reply_markup = keyboardO_2)
                     status_5 = True
                     # ambil Video
-                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 takeVideo.mp4 -y'
+                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 dokumentasiVideo.mp4 -y'
                     p = Popen(shlex.split(pipeline), stdin=DEVNULL, stdout=DEVNULL, stderr=STDOUT)
                     time.sleep(5) #delay mempersiapkan kamera
                     # motor servo jalan berdasarkan kolam dan takar_
@@ -1495,7 +1507,7 @@ while True:
                     bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 3 sedang berjalan..', reply_markup = keyboardO_2)
                     status_5 = True
                     # ambil Video
-                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 takeVideo.mp4 -y'
+                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 dokumentasiVideo.mp4 -y'
                     p = Popen(shlex.split(pipeline), stdin=DEVNULL, stdout=DEVNULL, stderr=STDOUT)
                     time.sleep(5) #delay mempersiapkan kamera
                     # motor servo jalan berdasarkan kolam dan takar_
@@ -1523,7 +1535,7 @@ while True:
                     bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 3 dan 2 sedang berjalan..', reply_markup = keyboardO_2)
                     status_5 = True
                     # ambil Video
-                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 takeVideo.mp4 -y'
+                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 dokumentasiVideo.mp4 -y'
                     p = Popen(shlex.split(pipeline), stdin=DEVNULL, stdout=DEVNULL, stderr=STDOUT)
                     time.sleep(5) #delay mempersiapkan kamera
                     # motor servo jalan berdasarkan kolam dan takar_
@@ -1550,7 +1562,7 @@ while True:
                     bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 1 sedang berjalan..', reply_markup = keyboardO_2)
                     status_5 = True
                     # ambil Video
-                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 takeVideo.mp4 -y'
+                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 dokumentasiVideo.mp4 -y'
                     p = Popen(shlex.split(pipeline), stdin=DEVNULL, stdout=DEVNULL, stderr=STDOUT)
                     time.sleep(5) #delay mempersiapkan kamera
                     # motor servo jalan berdasarkan kolam dan takar_
@@ -1575,7 +1587,7 @@ while True:
                     bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 2 sedang berjalan..', reply_markup = keyboardO_2)
                     status_5 = True
                     # ambil Video
-                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 takeVideo.mp4 -y'
+                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 dokumentasiVideo.mp4 -y'
                     p = Popen(shlex.split(pipeline), stdin=DEVNULL, stdout=DEVNULL, stderr=STDOUT)
                     time.sleep(5) #delay mempersiapkan kamera
                     # motor servo jalan berdasarkan kolam dan takar_
@@ -1600,7 +1612,7 @@ while True:
                     bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 3 sedang berjalan..', reply_markup = keyboardO_2)
                     status_5 = True
                     # ambil Video
-                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 takeVideo.mp4 -y'
+                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 dokumentasiVideo.mp4 -y'
                     p = Popen(shlex.split(pipeline), stdin=DEVNULL, stdout=DEVNULL, stderr=STDOUT)
                     time.sleep(5) #delay mempersiapkan kamera
                     # motor servo jalan berdasarkan kolam dan takar_
@@ -1628,7 +1640,7 @@ while True:
                     bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 1 dan 3 sedang berjalan..', reply_markup = keyboardO_2)
                     status_5 = True
                     # ambil Video
-                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 takeVideo.mp4 -y'
+                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 dokumentasiVideo.mp4 -y'
                     p = Popen(shlex.split(pipeline), stdin=DEVNULL, stdout=DEVNULL, stderr=STDOUT)
                     time.sleep(5) #delay mempersiapkan kamera
                     # motor servo jalan berdasarkan kolam dan takar_
@@ -1655,7 +1667,7 @@ while True:
                     bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 1 sedang berjalan..', reply_markup = keyboardO_2)
                     status_5 = True
                     # ambil Video
-                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 takeVideo.mp4 -y'
+                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 dokumentasiVideo.mp4 -y'
                     p = Popen(shlex.split(pipeline), stdin=DEVNULL, stdout=DEVNULL, stderr=STDOUT)
                     time.sleep(5) #delay mempersiapkan kamera
                     # motor servo jalan berdasarkan kolam dan takar_
@@ -1680,7 +1692,7 @@ while True:
                     bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 2 sedang berjalan..', reply_markup = keyboardO_2)
                     status_5 = True
                     # ambil Video
-                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 takeVideo.mp4 -y'
+                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 dokumentasiVideo.mp4 -y'
                     p = Popen(shlex.split(pipeline), stdin=DEVNULL, stdout=DEVNULL, stderr=STDOUT)
                     time.sleep(5) #delay mempersiapkan kamera
                     # motor servo jalan berdasarkan kolam dan takar_
@@ -1705,7 +1717,7 @@ while True:
                     bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 3 sedang berjalan..', reply_markup = keyboardO_2)
                     status_5 = True
                     # ambil Video
-                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 takeVideo.mp4 -y'
+                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 dokumentasiVideo.mp4 -y'
                     p = Popen(shlex.split(pipeline), stdin=DEVNULL, stdout=DEVNULL, stderr=STDOUT)
                     time.sleep(5) #delay mempersiapkan kamera
                     # motor servo jalan berdasarkan kolam dan takar_
@@ -1722,7 +1734,7 @@ while True:
                     bot.sendMessage(CHATID, 'Pemeberian pakan gagal dijalnkan, Proses lain sedangan berjalan..', reply_markup=keyboardO_1)                
         elif jadwal_1 == jadwal_3 and jadwal_3 == jadwal_2 and statusO_2 :
             print('running5')
-            if (statusP_1 == False and jadwal_1 == now.hour):
+            if (statusP_1 == False and statusP_2 == False and statusP_3 == False and jadwal_1 == now.hour):
                 statusO_3 = True
                 status_1 = True
                 status_2 = True
@@ -1734,7 +1746,7 @@ while True:
                     bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 1, 2 dan 3 sedang berjalan..', reply_markup = keyboardO_2)
                     status_5 = True
                     # ambil Video
-                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 takeVideo.mp4 -y'
+                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 dokumentasiVideo.mp4 -y'
                     p = Popen(shlex.split(pipeline), stdin=DEVNULL, stdout=DEVNULL, stderr=STDOUT)
                     time.sleep(5) #delay mempersiapkan kamera
                     # motor servo jalan berdasarkan kolam dan takar_
@@ -1751,6 +1763,165 @@ while True:
                     status_6 = True
                     bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 1, 2 dan 3 telah dilakukan secara otomatis')                    
                     bot.sendMessage(CHATID, 'Ingin Aku mengirimkan Video Dokumentasinya ?..', reply_markup=keyboardO_3)                    
+                else :
+                    bot.sendMessage(CHATID, 'Pemeberian pakan gagal dijalnkan, Proses lain sedangan berjalan..', reply_markup=keyboardO_1)
+            elif (statusP_1 == False and statusP_2 == False and statusP_3 and jadwal_1 == now.hour):
+                statusO_3 = True
+                status_1 = True
+                status_2 = True
+                bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 1 dan 2 akan dilakukan.. lanjutkan ? \nAku akan melanjutkannya secara otomatis jika Anda tidak membatalkanya..', parse_mode='html', reply_markup=keyboardO_1)
+                time.sleep(600)
+                if(statusO_1 and status_5 == False):
+                    statusO_3 = False
+                    bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 1 dan 2 sedang berjalan..', reply_markup = keyboardO_2)
+                    status_5 = True
+                    # ambil Video
+                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 dokumentasiVideo.mp4 -y'
+                    p = Popen(shlex.split(pipeline), stdin=DEVNULL, stdout=DEVNULL, stderr=STDOUT)
+                    time.sleep(5) #delay mempersiapkan kamera
+                    # motor servo jalan berdasarkan kolam dan takar_
+                    # stop rekam
+                    p.terminate()
+                    time.sleep(5) # delay endcoding video
+                    status_5 = False
+                    statusP_1 = True
+                    statusP_2 = True
+                    status_1 = False
+                    status_2 = False
+                    status_6 = True
+                    bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 1 dan 2 telah dilakukan secara otomatis')                    
+                    bot.sendMessage(CHATID, 'Ingin Aku mengirimkan Video Dokumentasinya ?..', reply_markup=keyboardO_3)
+                else :
+                    bot.sendMessage(CHATID, 'Pemeberian pakan gagal dijalnkan, Proses lain sedangan berjalan..', reply_markup=keyboardO_1)
+            elif (statusP_2 == False and statusP_3 == False and statusP_1 and jadwal_2 == now.hour):
+                statusO_3 = True
+                status_3 = True
+                status_2 = True
+                bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 3 dan 2 akan dilakukan.. lanjutkan ? \nAku akan melanjutkannya secara otomatis jika Anda tidak membatalkanya..', parse_mode='html', reply_markup=keyboardO_1)
+                time.sleep(600)
+                if(statusO_1 and status_5 == False):
+                    statusO_3 = False
+                    bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 3 dan 2 sedang berjalan..', reply_markup = keyboardO_2)
+                    status_5 = True
+                    # ambil Video
+                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 dokumentasiVideo.mp4 -y'
+                    p = Popen(shlex.split(pipeline), stdin=DEVNULL, stdout=DEVNULL, stderr=STDOUT)
+                    time.sleep(5) #delay mempersiapkan kamera
+                    # motor servo jalan berdasarkan kolam dan takar_
+                    # stop rekam
+                    p.terminate()
+                    time.sleep(5) # delay endcoding video
+                    status_5 = False
+                    statusP_3 = True
+                    statusP_2 = True
+                    status_2 = False
+                    status_3 = False
+                    status_6 = True
+                    bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 3 dan 2 telah dilakukan secara otomatis')                    
+                    bot.sendMessage(CHATID, 'Ingin Aku mengirimkan Video Dokumentasinya ?..', reply_markup=keyboardO_3)
+                else :
+                    bot.sendMessage(CHATID, 'Pemeberian pakan gagal dijalnkan, Proses lain sedangan berjalan..', reply_markup=keyboardO_1)
+            elif (statusP_1 == False and statusP_3 == False and statusP_2 and jadwal_1 == now.hour):
+                statusO_3 = True
+                status_1 = True
+                status_3 = True
+                bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 1 dan 3 akan dilakukan.. lanjutkan ? \nAku akan melanjutkannya secara otomatis jika Anda tidak membatalkanya..', parse_mode='html', reply_markup=keyboardO_1)
+                time.sleep(600)
+                if(statusO_1 and status_5 == False):
+                    statusO_3 = False
+                    bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 1 dan 3 sedang berjalan..', reply_markup = keyboardO_2)
+                    status_5 = True
+                    # ambil Video
+                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 dokumentasiVideo.mp4 -y'
+                    p = Popen(shlex.split(pipeline), stdin=DEVNULL, stdout=DEVNULL, stderr=STDOUT)
+                    time.sleep(5) #delay mempersiapkan kamera
+                    # motor servo jalan berdasarkan kolam dan takar_
+                    # stop rekam
+                    p.terminate()
+                    time.sleep(5) # delay endcoding video
+                    status_5 = False
+                    statusP_1 = True
+                    statusP_3 = True
+                    status_1 = False
+                    status_3 = False
+                    status_6 = True
+                    bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 1 dan 3 telah dilakukan secara otomatis')                    
+                    bot.sendMessage(CHATID, 'Ingin Aku mengirimkan Video Dokumentasinya ?..', reply_markup=keyboardO_3)
+                else :
+                    bot.sendMessage(CHATID, 'Pemeberian pakan gagal dijalnkan, Proses lain sedangan berjalan..', reply_markup=keyboardO_1)
+            elif (statusP_1 == False and statusP_2 and statusP_3 and jadwal_1 == now.hour):
+                statusO_3 = True
+                status_1 = True
+                bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 1 akan dilakukan.. lanjutkan ? \nAku akan melanjutkannya secara otomatis jika Anda tidak membatalkanya..', parse_mode='html', reply_markup=keyboardO_1)
+                time.sleep(600)
+                if(statusO_1 and status_5 == False):
+                    statusO_3 = False
+                    bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 1 sedang berjalan..', reply_markup = keyboardO_2)
+                    status_5 = True
+                    # ambil Video
+                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 dokumentasiVideo.mp4 -y'
+                    p = Popen(shlex.split(pipeline), stdin=DEVNULL, stdout=DEVNULL, stderr=STDOUT)
+                    time.sleep(5) #delay mempersiapkan kamera
+                    # motor servo jalan berdasarkan kolam 1 takar_1
+                    # stop rekam
+                    p.terminate()
+                    time.sleep(5) # delay endcoding video
+                    status_5 = False
+                    statusP_1 = True
+                    status_1 = False
+                    status_6 = True
+                    bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 1 telah dilakukan secara otomatis')
+                    bot.sendMessage(CHATID, 'Ingin Aku mengirimkan Video Dokumentasinya ?..', reply_markup=keyboardO_3)
+                else :
+                    bot.sendMessage(CHATID, 'Pemeberian pakan gagal dijalnkan, Proses lain sedangan berjalan..', reply_markup=keyboardO_1)
+            elif (statusP_2 == False and statusP_3 and statusP_1 and jadwal_2 == now.hour):
+                statusO_3 = True
+                status_2 = True
+                bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 2 akan dilakukan.. lanjutkan ? \nAku akan melanjutkannya secara otomatis jika Anda tidak membatalkanya..', parse_mode='html', reply_markup=keyboardO_1)
+                time.sleep(600)
+                if(statusO_1 and status_5 == False):
+                    statusO_3 = False
+                    bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 2 sedang berjalan..', reply_markup = keyboardO_2)
+                    status_5 = True
+                    # ambil Video
+                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 dokumentasiVideo.mp4 -y'
+                    p = Popen(shlex.split(pipeline), stdin=DEVNULL, stdout=DEVNULL, stderr=STDOUT)
+                    time.sleep(5) #delay mempersiapkan kamera
+                    # motor servo jalan berdasarkan kolam 2 takar_2
+                    # stop rekam
+                    p.terminate()
+                    time.sleep(5) # delay endcoding video
+                    status_5 = False
+                    statusP_2 = True
+                    status_2 = False
+                    status_6 = True
+                    bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 2 telah dilakukan secara otomatis')
+                    bot.sendMessage(CHATID, 'Ingin Aku mengirimkan Video Dokumentasinya ?..', reply_markup=keyboardO_3)
+                else :
+                    bot.sendMessage(CHATID, 'Pemeberian pakan gagal dijalnkan, Proses lain sedangan berjalan..', reply_markup=keyboardO_1)                    
+            elif (statusP_3 == False and statusP_2 and statusP_1 and jadwal_3 == now.hour):
+                statusO_3 = True
+                stauts_3 = True
+                bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 3 akan dilakukan.. lanjutkan ? \nAku akan melanjutkannya secara otomatis jika Anda tidak membatalkanya..', parse_mode='html', reply_markup=keyboardO_1)
+                time.sleep(600)
+                if(statusO_1 and status_5 == False):
+                    statusO_3 = False
+                    bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 3 sedang berjalan..', reply_markup = keyboardO_2)
+                    status_5 = True
+                    # ambil Video
+                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 dokumentasiVideo.mp4 -y'
+                    p = Popen(shlex.split(pipeline), stdin=DEVNULL, stdout=DEVNULL, stderr=STDOUT)
+                    time.sleep(5) #delay mempersiapkan kamera
+                    # motor servo jalan berdasarkan kolam 3 takar_3
+                    # stop rekam
+                    p.terminate()
+                    time.sleep(5) # delay endcoding video
+                    status_5 = False
+                    statusP_3 = True
+                    status_3 = False
+                    status_6 = True
+                    bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 3 telah dilakukan secara otomatis')                    
+                    bot.sendMessage(CHATID, 'Ingin Aku mengirimkan Video Dokumentasinya ?..', reply_markup=keyboardO_3)
                 else :
                     bot.sendMessage(CHATID, 'Pemeberian pakan gagal dijalnkan, Proses lain sedangan berjalan..', reply_markup=keyboardO_1)
                     
@@ -1771,6 +1942,9 @@ while True:
             schedule = schedule + 1
             if (schedule == 24):
                 schedule = 0
+                statusP_1 = False
+                statusP_2 = False
+                statusP_3 = False
 
             status_5 = True
             # ambil Gambar
@@ -1993,7 +2167,7 @@ while True:
                     status_3 = False                
         elif jadwal_1 == jadwal_3 and jadwal_3 == jadwal_2 and statusO_2 :
             print('jalan5')
-            if (statusP_1 == False and jadwal_1 == now.hour):
+            if (statusP_1 == False and statusP_2 == False and statusP_3 == False and jadwal_1 == now.hour):
                 statusO_3 = True
                 status_1 = True
                 status_2 = True
@@ -2001,16 +2175,90 @@ while True:
                 if(statusO_1 and status_5 == False):
                     statusO_3 = False
                     status_5 = True
-                    # motor servo jalan berdasarkan kolam 1 takar_1
+                    # motor servo jalan berdasarkan kolam dan takar_
                     status_5 = False
-                    status_6 = True
                     statusP_1 = True
                     statusP_2 = True
                     statusP_3 = True
                     status_1 = False
                     status_2 = False
                     status_3 = False
-                    
-        # == end Pembarian Pakan Otomatis ==                
-    time.sleep(60)
+                    status_6 = True
+            elif (statusP_1 == False and statusP_2 == False and statusP_3 and jadwal_1 == now.hour):
+                statusO_3 = True
+                status_1 = True
+                status_2 = True
+                if(statusO_1 and status_5 == False):
+                    statusO_3 = False
+                    status_5 = True
+                    # motor servo jalan berdasarkan kolam dan takar_
+                    status_5 = False
+                    statusP_1 = True
+                    statusP_2 = True
+                    status_1 = False
+                    status_2 = False
+                    status_6 = True
+            elif (statusP_2 == False and statusP_3 == False and statusP_1 and jadwal_2 == now.hour):
+                statusO_3 = True
+                status_3 = True
+                status_2 = True
+                if(statusO_1 and status_5 == False):
+                    statusO_3 = False
+                    status_5 = True
+                    # motor servo jalan berdasarkan kolam dan takar_
+                    status_5 = False
+                    statusP_3 = True
+                    statusP_2 = True
+                    status_2 = False
+                    status_3 = False
+                    status_6 = True
+            elif (statusP_1 == False and statusP_3 == False and statusP_2 and jadwal_1 == now.hour):
+                statusO_3 = True
+                status_1 = True
+                status_3 = True
+                if(statusO_1 and status_5 == False):
+                    statusO_3 = False
+                    status_5 = True
+                    # motor servo jalan berdasarkan kolam dan takar_
+                    status_5 = False
+                    statusP_1 = True
+                    statusP_3 = True
+                    status_1 = False
+                    status_3 = False
+                    status_6 = True
+            elif (statusP_1 == False and statusP_2 and statusP_3 and jadwal_1 == now.hour):
+                statusO_3 = True
+                status_1 = True
+                if(statusO_1 and status_5 == False):
+                    statusO_3 = False
+                    status_5 = True
+                    # motor servo jalan berdasarkan kolam 1 takar_1
+                    status_5 = False
+                    statusP_1 = True
+                    status_1 = False
+                    status_6 = True
+            elif (statusP_2 == False and statusP_3 and statusP_1 and jadwal_2 == now.hour):
+                statusO_3 = True
+                status_2 = True
+                if(statusO_1 and status_5 == False):
+                    statusO_3 = False
+                    status_5 = True
+                    # motor servo jalan berdasarkan kolam 2 takar_2
+                    status_5 = False
+                    statusP_2 = True
+                    status_2 = False
+                    status_6 = True                  
+            elif (statusP_3 == False and statusP_2 and statusP_1 and jadwal_3 == now.hour):
+                statusO_3 = True
+                stauts_3 = True
+                if(statusO_1 and status_5 == False):
+                    statusO_3 = False
+                    status_5 = True
+                    # motor servo jalan berdasarkan kolam 3 takar_3
+                    status_5 = False
+                    statusP_3 = True
+                    status_3 = False
+                    status_6 = True
 
+        # == end Pembarian Pakan Otomatis ==                
+    time.sleep(10)
