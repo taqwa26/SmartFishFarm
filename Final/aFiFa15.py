@@ -1,9 +1,11 @@
 import RPi.GPIO as GPIO
 import time, datetime
+import shlex
 import os
 import sys
 import telepot
 import telepot.helper
+from subprocess import Popen, DEVNULL, STDOUT
 from telepot.loop import MessageLoop
 from telepot.namedtuple import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
 from telepot.delegate import (per_chat_id, create_open, pave_event_space, include_callback_query_chat_id)
@@ -202,6 +204,7 @@ class Lover(telepot.helper.ChatHandler):
         global status_2
         global status_3
         global status_4
+        global status_5
         global status_6
         global statusP_1
         global statusP_2
@@ -216,19 +219,24 @@ class Lover(telepot.helper.ChatHandler):
             bot.sendMessage(chat_id, "Maaf ini adalah bot pribadi. Akses ditolak!")
             self.close()
         
-        print(statusO_3,status_1)
-        if (statusO_3 == False) :
+        print('pesan masuk')
+        if (status_5) :
+            sent = self.sender.sendMessage('Tunggu sebentar.. aku sedang melakukan pemrosesan otomatis atau proses sebelumnya belum selasai. \n\n Kirimi aku pesan beberapa saat lagi..', parse_mode='html')
+            self._editor = telepot.helper.Editor(self.bot, sent)
+            self._edit_msg_ident = telepot.message_identifier(sent)
+            self.close()
+            
+        if (statusO_3 == False and status_5 == False) :
             if (status_1 or status_2 or status_3 or status_4) : 
                 self._cancel_last()
                 status_1 = False
                 status_2 = False
                 status_3 = False
                 status_4 = False
-        print(statusO_3,status_1)
         
         command = msg['text']
         if (command == 'Keluar'):
-            sent = self.sender.sendMessage("Have a nice day \nBye..")
+            sent = self.sender.sendMessage("Have a nice day \nBye..", reply_markup=self.keyboard0)
             self._editor = telepot.helper.Editor(self.bot, sent)
             self._edit_msg_ident = telepot.message_identifier(sent)
             self.close()
@@ -360,35 +368,44 @@ class Lover(telepot.helper.ChatHandler):
             self._edit_msg_ident = telepot.message_identifier(sent)
             
         elif (command == 'Lanjutkan..' and statusO_3):
-            sent = self.sender.sendMessage('Pemberian pakan sedang berjalan.. ', reply_markup=self.keyboard0)
-            text = 'Pemberian Pakan secara terjadwal pada kolam '
-            print(status_1,status_2,status_3)
-            if (status_1) :
-                # motor sevo jalan kolam 1 takar 1
-                # ambil video
-                text += '1, '
-                status_1 = False
-                statusP_1 = True
-                statusO_1 = False
-            if (status_2) :
-                # motor sevo jalan kolam 2 takar 2
-                # ambil video
-                text += '2, '
-                status_2 = False
-                statusP_2 = True
-                statusO_1 = False
-            if (status_3) :
-                # motor sevo jalan kolam 3 takar 3
-                # ambil video
-                text += '3, '
-                status_3 = False
-                statusP_3 = True
-                statusO_1 = False
-            statusO_3 = False
-            text += 'telah selesai dilakukan..'
-            sent = self.sender.sendMessage(text)
-            status_6 = True
-            sent = self.sender.sendMessage('Ingin Aku mengirimkan Video Dokumentasinya ?..', reply_markup=keyboardO_3)
+            if status_5 == False :
+                sent = self.sender.sendMessage('Pemberian pakan sedang berjalan.. ', reply_markup=self.keyboard0)
+                statusO_3 = False # command 'Lanjutkan..' tidak berlaku lagi
+                status_5 = True
+                text = 'Pemberian Pakan secara terjadwal pada kolam '                
+                # ambil Video
+                pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 takeVideo.mp4 -y'
+                p = Popen(shlex.split(pipeline), stdin=DEVNULL, stdout=DEVNULL, stderr=STDOUT)
+                time.sleep(5) #delay mempersiapkan kamera
+                if (status_1) :
+                    statusO_1 = False
+                    status_1 = False
+                    # motor sevo jalan kolam 1 takar 1
+                    text += '1, '
+                    statusP_1 = True                    
+                if (status_2) :
+                    statusO_1 = False
+                    status_2 = False
+                    # motor sevo jalan kolam 2 takar 2
+                    text += '2, '
+                    statusP_2 = True                    
+                if (status_3) :
+                    statusO_1 = False
+                    status_3 = False
+                    # motor sevo jalan kolam 3 takar 3
+                    text += '3, '
+                    statusP_3 = True                
+                # stop rekam
+                p.terminate()
+                time.sleep(5) # delay endcoding video
+                text += 'telah selesai dilakukan..'
+                status_5 = False
+                sent = self.sender.sendMessage(text)
+                status_6 = True
+                sent = self.sender.sendMessage('Ingin Aku mengirimkan Video Dokumentasinya ?..', reply_markup=keyboardO_3)
+            else :
+                self.bot.answerCallbackQuery(query_id, text='Gagal Memberikan Pakan')
+                sent = self.sender.sendMessage('Proses lain sedangan berjalan..')
             self._editor = telepot.helper.Editor(self.bot, sent)
             self._edit_msg_ident = telepot.message_identifier(sent)
         elif (command == 'Batalkan..' and statusO_3):
@@ -419,7 +436,6 @@ class Lover(telepot.helper.ChatHandler):
             sent = self.sender.sendMessage("Okey \nBye..", reply_markup=self.keyboard0)
             self._editor = telepot.helper.Editor(self.bot, sent)
             self._edit_msg_ident = telepot.message_identifier(sent)
-            self.close()
         #== end Beri Pakan ==
             
         #== Bagian Status ==
@@ -489,18 +505,18 @@ class Lover(telepot.helper.ChatHandler):
         global status_1
         global status_2
         global status_3
+        global status_5
         global status_6
         global statusP_1
         global statusP_2
         global statusP_3
-        global statusO_4
         
         query_id, from_id, query_data = telepot.glance(msg, flavor='callback_query')
             
         # == Setting Penjadwalan ==              
         if query_data == '1':
-            self.bot.answerCallbackQuery(query_id, text='Ok. Penjadwalan tersimpan..')
             self._cancel_last()
+            self.bot.answerCallbackQuery(query_id, text='Ok. Penjadwalan tersimpan..')
             text = 'Penjadwalan pemberian Pakan pada kolam '
             if (status_1):
                 text += '1, '
@@ -516,13 +532,11 @@ class Lover(telepot.helper.ChatHandler):
                 status_3 = False
             text += 'telah diset ke jam 01:00'
             sent = self.sender.sendMessage(text)
-            self._editor = telepot.helper.Editor(self.bot, sent)
-            self._edit_msg_ident = telepot.message_identifier(sent)
             self.close()
         
         elif query_data == '2':
-            self.bot.answerCallbackQuery(query_id, text='Ok. Penjadwalan tersimpan..')
             self._cancel_last()
+            self.bot.answerCallbackQuery(query_id, text='Ok. Penjadwalan tersimpan..')
             text = 'Penjadwalan pemberian Pakan pada kolam '
             if (status_1):
                 text += '1, '
@@ -538,13 +552,11 @@ class Lover(telepot.helper.ChatHandler):
                 status_3 = False
             text += 'telah diset ke jam 02:00'
             sent = self.sender.sendMessage(text)
-            self._editor = telepot.helper.Editor(self.bot, sent)
-            self._edit_msg_ident = telepot.message_identifier(sent)
             self.close()
             
         elif query_data == '3':
-            self.bot.answerCallbackQuery(query_id, text='Ok. Penjadwalan tersimpan..')
             self._cancel_last()
+            self.bot.answerCallbackQuery(query_id, text='Ok. Penjadwalan tersimpan..')
             text = 'Penjadwalan pemberian Pakan pada kolam '
             if (status_1):
                 text += '1, '
@@ -560,13 +572,11 @@ class Lover(telepot.helper.ChatHandler):
                 status_3 = False
             text += 'telah diset ke jam 03:00'
             sent = self.sender.sendMessage(text)
-            self._editor = telepot.helper.Editor(self.bot, sent)
-            self._edit_msg_ident = telepot.message_identifier(sent)
             self.close()
             
         elif query_data == '4':
-            self.bot.answerCallbackQuery(query_id, text='Ok. Penjadwalan tersimpan..')
             self._cancel_last()
+            self.bot.answerCallbackQuery(query_id, text='Ok. Penjadwalan tersimpan..')
             text = 'Penjadwalan pemberian Pakan pada kolam '
             if (status_1):
                 text += '1, '
@@ -582,13 +592,11 @@ class Lover(telepot.helper.ChatHandler):
                 status_3 = False
             text += 'telah diset ke jam 04:00'
             sent = self.sender.sendMessage(text)
-            self._editor = telepot.helper.Editor(self.bot, sent)
-            self._edit_msg_ident = telepot.message_identifier(sent)
             self.close()
         
         elif query_data == '5':
-            self.bot.answerCallbackQuery(query_id, text='Ok. Penjadwalan tersimpan..')
             self._cancel_last()
+            self.bot.answerCallbackQuery(query_id, text='Ok. Penjadwalan tersimpan..')
             text = 'Penjadwalan pemberian Pakan pada kolam '
             if (status_1):
                 text += '1, '
@@ -604,13 +612,11 @@ class Lover(telepot.helper.ChatHandler):
                 status_3 = False
             text += 'telah diset ke jam 05:00'
             sent = self.sender.sendMessage(text)
-            self._editor = telepot.helper.Editor(self.bot, sent)
-            self._edit_msg_ident = telepot.message_identifier(sent)
             self.close()
             
         elif query_data == '6':
-            self.bot.answerCallbackQuery(query_id, text='Ok. Penjadwalan tersimpan..')
             self._cancel_last()
+            self.bot.answerCallbackQuery(query_id, text='Ok. Penjadwalan tersimpan..')
             text = 'Penjadwalan pemberian Pakan pada kolam '
             if (status_1):
                 text += '1, '
@@ -626,13 +632,11 @@ class Lover(telepot.helper.ChatHandler):
                 status_3 = False
             text += 'telah diset ke jam 06:00'
             sent = self.sender.sendMessage(text)
-            self._editor = telepot.helper.Editor(self.bot, sent)
-            self._edit_msg_ident = telepot.message_identifier(sent)
             self.close()
             
         elif query_data == '7':
-            self.bot.answerCallbackQuery(query_id, text='Ok. Penjadwalan tersimpan..')
             self._cancel_last()
+            self.bot.answerCallbackQuery(query_id, text='Ok. Penjadwalan tersimpan..')
             text = 'Penjadwalan pemberian Pakan pada kolam '
             if (status_1):
                 text += '1, '
@@ -648,13 +652,11 @@ class Lover(telepot.helper.ChatHandler):
                 status_3 = False
             text += 'telah diset ke jam 07:00'
             sent = self.sender.sendMessage(text)
-            self._editor = telepot.helper.Editor(self.bot, sent)
-            self._edit_msg_ident = telepot.message_identifier(sent)
             self.close()
         
         elif query_data == '8':
-            self.bot.answerCallbackQuery(query_id, text='Ok. Penjadwalan tersimpan..')
             self._cancel_last()
+            self.bot.answerCallbackQuery(query_id, text='Ok. Penjadwalan tersimpan..')
             text = 'Penjadwalan pemberian Pakan pada kolam '
             if (status_1):
                 text += '1, '
@@ -670,13 +672,11 @@ class Lover(telepot.helper.ChatHandler):
                 status_3 = False
             text += 'telah diset ke jam 08:00'
             sent = self.sender.sendMessage(text)
-            self._editor = telepot.helper.Editor(self.bot, sent)
-            self._edit_msg_ident = telepot.message_identifier(sent)
             self.close()
         
         elif query_data == '9':
-            self.bot.answerCallbackQuery(query_id, text='Ok. Penjadwalan tersimpan..')
             self._cancel_last()
+            self.bot.answerCallbackQuery(query_id, text='Ok. Penjadwalan tersimpan..')
             text = 'Penjadwalan pemberian Pakan pada kolam '
             if (status_1):
                 text += '1, '
@@ -692,13 +692,11 @@ class Lover(telepot.helper.ChatHandler):
                 status_3 = False
             text += 'telah diset ke jam 09:00'
             sent = self.sender.sendMessage(text)
-            self._editor = telepot.helper.Editor(self.bot, sent)
-            self._edit_msg_ident = telepot.message_identifier(sent)
             self.close()
         
         elif query_data == '10':
-            self.bot.answerCallbackQuery(query_id, text='Ok. Penjadwalan tersimpan..')
             self._cancel_last()
+            self.bot.answerCallbackQuery(query_id, text='Ok. Penjadwalan tersimpan..')
             text = 'Penjadwalan pemberian Pakan pada kolam '
             if (status_1):
                 text += '1, '
@@ -714,13 +712,11 @@ class Lover(telepot.helper.ChatHandler):
                 status_3 = False
             text += 'telah diset ke jam 10:00'
             sent = self.sender.sendMessage(text)
-            self._editor = telepot.helper.Editor(self.bot, sent)
-            self._edit_msg_ident = telepot.message_identifier(sent)
             self.close()
             
         elif query_data == '11':
-            self.bot.answerCallbackQuery(query_id, text='Ok. Penjadwalan tersimpan..')
             self._cancel_last()
+            self.bot.answerCallbackQuery(query_id, text='Ok. Penjadwalan tersimpan..')
             text = 'Penjadwalan pemberian Pakan pada kolam '
             if (status_1):
                 text += '1, '
@@ -736,13 +732,11 @@ class Lover(telepot.helper.ChatHandler):
                 status_3 = False
             text += 'telah diset ke jam 11:00'
             sent = self.sender.sendMessage(text)
-            self._editor = telepot.helper.Editor(self.bot, sent)
-            self._edit_msg_ident = telepot.message_identifier(sent)
             self.close()
             
         elif query_data == '12':
-            self.bot.answerCallbackQuery(query_id, text='Ok. Penjadwalan tersimpan..')
             self._cancel_last()
+            self.bot.answerCallbackQuery(query_id, text='Ok. Penjadwalan tersimpan..')
             text = 'Penjadwalan pemberian Pakan pada kolam '
             if (status_1):
                 text += '1, '
@@ -758,13 +752,11 @@ class Lover(telepot.helper.ChatHandler):
                 status_3 = False
             text += 'telah diset ke jam 12:00'
             sent = self.sender.sendMessage(text)
-            self._editor = telepot.helper.Editor(self.bot, sent)
-            self._edit_msg_ident = telepot.message_identifier(sent)
             self.close()
             
         elif query_data == '13':
-            self.bot.answerCallbackQuery(query_id, text='Ok. Penjadwalan tersimpan..')
             self._cancel_last()
+            self.bot.answerCallbackQuery(query_id, text='Ok. Penjadwalan tersimpan..')
             text = 'Penjadwalan pemberian Pakan pada kolam '
             if (status_1):
                 text += '1, '
@@ -780,13 +772,11 @@ class Lover(telepot.helper.ChatHandler):
                 status_3 = False
             text += 'telah diset ke jam 13:00'
             sent = self.sender.sendMessage(text)
-            self._editor = telepot.helper.Editor(self.bot, sent)
-            self._edit_msg_ident = telepot.message_identifier(sent)
             self.close()
             
         elif query_data == '14':
-            self.bot.answerCallbackQuery(query_id, text='Ok. Penjadwalan tersimpan..')
             self._cancel_last()
+            self.bot.answerCallbackQuery(query_id, text='Ok. Penjadwalan tersimpan..')
             text = 'Penjadwalan pemberian Pakan pada kolam '
             if (status_1):
                 text += '1, '
@@ -802,13 +792,11 @@ class Lover(telepot.helper.ChatHandler):
                 status_3 = False
             text += 'telah diset ke jam 14:00'
             sent = self.sender.sendMessage(text)
-            self._editor = telepot.helper.Editor(self.bot, sent)
-            self._edit_msg_ident = telepot.message_identifier(sent)
             self.close()
             
         elif query_data == '15':
-            self.bot.answerCallbackQuery(query_id, text='Ok. Penjadwalan tersimpan..')
             self._cancel_last()
+            self.bot.answerCallbackQuery(query_id, text='Ok. Penjadwalan tersimpan..')
             text = 'Penjadwalan pemberian Pakan pada kolam '
             if (status_1):
                 text += '1, '
@@ -824,13 +812,11 @@ class Lover(telepot.helper.ChatHandler):
                 status_3 = False
             text += 'telah diset ke jam 15:00'
             sent = self.sender.sendMessage(text)
-            self._editor = telepot.helper.Editor(self.bot, sent)
-            self._edit_msg_ident = telepot.message_identifier(sent)
             self.close()
             
         elif query_data == '16':
-            self.bot.answerCallbackQuery(query_id, text='Ok. Penjadwalan tersimpan..')
             self._cancel_last()
+            self.bot.answerCallbackQuery(query_id, text='Ok. Penjadwalan tersimpan..')
             text = 'Penjadwalan pemberian Pakan pada kolam '
             if (status_1):
                 text += '1, '
@@ -846,13 +832,11 @@ class Lover(telepot.helper.ChatHandler):
                 status_3 = False
             text += 'telah diset ke jam 16:00'
             sent = self.sender.sendMessage(text)
-            self._editor = telepot.helper.Editor(self.bot, sent)
-            self._edit_msg_ident = telepot.message_identifier(sent)
             self.close()
             
         elif query_data == '17':
-            self.bot.answerCallbackQuery(query_id, text='Ok. Penjadwalan tersimpan..')
             self._cancel_last()
+            self.bot.answerCallbackQuery(query_id, text='Ok. Penjadwalan tersimpan..')
             text = 'Penjadwalan pemberian Pakan pada kolam '
             if (status_1):
                 text += '1, '
@@ -868,13 +852,11 @@ class Lover(telepot.helper.ChatHandler):
                 status_3 = False
             text += 'telah diset ke jam 17:00'
             sent = self.sender.sendMessage(text)
-            self._editor = telepot.helper.Editor(self.bot, sent)
-            self._edit_msg_ident = telepot.message_identifier(sent)
             self.close()
             
         elif query_data == '18':
-            self.bot.answerCallbackQuery(query_id, text='Ok. Penjadwalan tersimpan..')
             self._cancel_last()
+            self.bot.answerCallbackQuery(query_id, text='Ok. Penjadwalan tersimpan..')
             text = 'Penjadwalan pemberian Pakan pada kolam '
             if (status_1):
                 text += '1, '
@@ -890,13 +872,11 @@ class Lover(telepot.helper.ChatHandler):
                 status_3 = False
             text += 'telah diset ke jam 18:00'
             sent = self.sender.sendMessage(text)
-            self._editor = telepot.helper.Editor(self.bot, sent)
-            self._edit_msg_ident = telepot.message_identifier(sent)
             self.close()
             
         elif query_data == '19':
-            self.bot.answerCallbackQuery(query_id, text='Ok. Penjadwalan tersimpan..')
             self._cancel_last()
+            self.bot.answerCallbackQuery(query_id, text='Ok. Penjadwalan tersimpan..')
             text = 'Penjadwalan pemberian Pakan pada kolam '
             if (status_1):
                 text += '1, '
@@ -912,13 +892,11 @@ class Lover(telepot.helper.ChatHandler):
                 status_3 = False
             text += 'telah diset ke jam 19:00'
             sent = self.sender.sendMessage(text)
-            self._editor = telepot.helper.Editor(self.bot, sent)
-            self._edit_msg_ident = telepot.message_identifier(sent)
             self.close()
             
         elif query_data == '20':
-            self.bot.answerCallbackQuery(query_id, text='Ok. Penjadwalan tersimpan..')
             self._cancel_last()
+            self.bot.answerCallbackQuery(query_id, text='Ok. Penjadwalan tersimpan..')
             text = 'Penjadwalan pemberian Pakan pada kolam '
             if (status_1):
                 text += '1, '
@@ -934,13 +912,11 @@ class Lover(telepot.helper.ChatHandler):
                 status_3 = False
             text += 'telah diset ke jam 20:00'
             sent = self.sender.sendMessage(text)
-            self._editor = telepot.helper.Editor(self.bot, sent)
-            self._edit_msg_ident = telepot.message_identifier(sent)
             self.close()
             
         elif query_data == '21':
-            self.bot.answerCallbackQuery(query_id, text='Ok. Penjadwalan tersimpan..')
             self._cancel_last()
+            self.bot.answerCallbackQuery(query_id, text='Ok. Penjadwalan tersimpan..')
             text = 'Penjadwalan pemberian Pakan pada kolam '
             if (status_1):
                 text += '1, '
@@ -956,13 +932,11 @@ class Lover(telepot.helper.ChatHandler):
                 status_3 = False
             text += 'telah diset ke jam 21:00'
             sent = self.sender.sendMessage(text)
-            self._editor = telepot.helper.Editor(self.bot, sent)
-            self._edit_msg_ident = telepot.message_identifier(sent)
             self.close()
             
         elif query_data == '22':
-            self.bot.answerCallbackQuery(query_id, text='Ok. Penjadwalan tersimpan..')
             self._cancel_last()
+            self.bot.answerCallbackQuery(query_id, text='Ok. Penjadwalan tersimpan..')
             text = 'Penjadwalan pemberian Pakan pada kolam '
             if (status_1):
                 text += '1, '
@@ -978,11 +952,10 @@ class Lover(telepot.helper.ChatHandler):
                 status_3 = False
             text += 'telah diset ke jam 22:00'
             sent = self.sender.sendMessage(text)
-            self._editor = telepot.helper.Editor(self.bot, sent)
-            self._edit_msg_ident = telepot.message_identifier(sent)
             self.close()
             
         elif query_data == '23':
+            self._cancel_last()
             self.bot.answerCallbackQuery(query_id, text='Ok. Penjadwalan tersimpan..')
             self._cancel_last()
             text = 'Penjadwalan pemberian Pakan pada kolam '
@@ -1000,13 +973,11 @@ class Lover(telepot.helper.ChatHandler):
                 status_3 = False
             text += 'telah diset ke jam 23:00'
             sent = self.sender.sendMessage(text)
-            self._editor = telepot.helper.Editor(self.bot, sent)
-            self._edit_msg_ident = telepot.message_identifier(sent)
             self.close()
             
         elif query_data == '0':
-            self.bot.answerCallbackQuery(query_id, text='Ok. Penjadwalan tersimpan..')
             self._cancel_last()
+            self.bot.answerCallbackQuery(query_id, text='Ok. Penjadwalan tersimpan..')
             text = 'Penjadwalan pemberian Pakan pada kolam '
             if (status_1):
                 text += '1, '
@@ -1022,15 +993,13 @@ class Lover(telepot.helper.ChatHandler):
                 status_3 = False
             text += 'telah diset ke jam 00:00'
             sent = self.sender.sendMessage(text)
-            self._editor = telepot.helper.Editor(self.bot, sent)
-            self._edit_msg_ident = telepot.message_identifier(sent)
             self.close()
         # == End Setting Penjadwalan ==
         
         # == Setting Dosis ==
         elif query_data == 'A':
-            self.bot.answerCallbackQuery(query_id, text='Ok. Penjadwalan tersimpan..')
             self._cancel_last()
+            self.bot.answerCallbackQuery(query_id, text='Ok. Penjadwalan tersimpan..')
             text = 'Dosis pemberian Pakan pada kolam '
             if (status_1):
                 text += '1, '
@@ -1046,13 +1015,11 @@ class Lover(telepot.helper.ChatHandler):
                 status_3 = False
             text += 'telah diset dengan takaran Kecil'
             sent = self.sender.sendMessage(text)
-            self._editor = telepot.helper.Editor(self.bot, sent)
-            self._edit_msg_ident = telepot.message_identifier(sent)
             self.close()
             
         elif query_data == 'B':
-            self.bot.answerCallbackQuery(query_id, text='Ok. Penjadwalan tersimpan..')
             self._cancel_last()
+            self.bot.answerCallbackQuery(query_id, text='Ok. Penjadwalan tersimpan..')
             text = 'Dosis pemberian Pakan pada kolam '
             if (status_1):
                 text += '1, '
@@ -1068,13 +1035,11 @@ class Lover(telepot.helper.ChatHandler):
                 status_3 = False
             text += 'telah diset denga takaran Sedang'
             sent = self.sender.sendMessage(text)
-            self._editor = telepot.helper.Editor(self.bot, sent)
-            self._edit_msg_ident = telepot.message_identifier(sent)
             self.close()
             
         elif query_data == 'C':
-            self.bot.answerCallbackQuery(query_id, text='Ok. Penjadwalan tersimpan..')
             self._cancel_last()
+            self.bot.answerCallbackQuery(query_id, text='Ok. Penjadwalan tersimpan..')
             text = 'Dosis pemberian Pakan pada kolam '
             if (status_1):
                 text += '1, '
@@ -1090,96 +1055,118 @@ class Lover(telepot.helper.ChatHandler):
                 status_3 = False
             text += 'telah diset dengan takaran Besar'
             sent = self.sender.sendMessage(text)
-            self._editor = telepot.helper.Editor(self.bot, sent)
-            self._edit_msg_ident = telepot.message_identifier(sent)
             self.close()
         # == End Setting Dosis ==
         
         # == Beri Pakan ==
         elif query_data == 'BB':
-            self.bot.answerCallbackQuery(query_id, text='Ok. Perintah Dijalankan..')
             self._cancel_last()
-            text = 'Pemberian Pakan pada Kolam '
-            if (status_1):
-                text += '1, '
-                # motor servo jalan
-                # ambil video
-                statusP_1 = True
-                status_1 = False
-            if (status_2):
-                text += '2, '
-                # motor servo jalan
-                # ambil video
-                statusP_2 = True
-                status_2 = False
-            if (status_3):
-                text += '3, '
-                # motor servo jalan
-                # ambil video
-                statusP_3 = True
-                status_3 = False
-            text += 'telah dilakukan'
-            sent = self.sender.sendMessage(text)
-            status_6 = True
-            sent = self.sender.sendMessage('Ingin Aku mengirimkan Video Dokumentasinya ?..', reply_markup=keyboardO_3)
-            self._editor = telepot.helper.Editor(self.bot, sent)
-            self._edit_msg_ident = telepot.message_identifier(sent)
+            if(status_5 == False) :
+                self.bot.answerCallbackQuery(query_id, text='Ok. Perintah Dijalankan..')
+                status_5 = True
+                text = 'Pemberian Pakan pada Kolam '
+                # ambil Video
+                pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 takeVideo.mp4 -y'
+                p = Popen(shlex.split(pipeline), stdin=DEVNULL, stdout=DEVNULL, stderr=STDOUT)
+                time.sleep(5) #delay mempersiapkan kamera
+                if (status_1):
+                    status_1 = False
+                    text += '1, '
+                    # motor servo jalan
+                    statusP_1 = True
+                if (status_2):
+                    status_2 = False
+                    text += '2, '
+                    # motor servo jalan
+                    statusP_2 = True
+                if (status_3):
+                    status_3 = False
+                    text += '3, '
+                    # motor servo jalan
+                    statusP_3 = True
+                # stop rekam
+                p.terminate()
+                time.sleep(5) # delay endcoding video
+                text += 'telah dilakukan'
+                status_5 = False
+                sent = self.sender.sendMessage(text)
+                status_6 = True
+                sent = self.sender.sendMessage('Ingin Aku mengirimkan Video Dokumentasinya ?..', reply_markup=keyboardO_3)
+            else :
+                self.bot.answerCallbackQuery(query_id, text='Gagal Memberikan Pakan')
+                sent = self.sender.sendMessage('Proses lain sedangan berjalan..')
             self.close()
             
         elif query_data == 'BT':
-            self.bot.answerCallbackQuery(query_id, text='Ok. Perintah Dijalankan..')
             self._cancel_last()
-            self.bot.sender.sendMessage('Pemberian pakan sedang berjalan')
-            text = 'Pemberian Pakan pada Kolam '
-            if (status_1):
-                text += '1, '
-                # motor servo jalan
-                # ambil video
-                status_1 = False
-            if (status_2):
-                text += '2, '
-                # motor servo jalan
-                # ambil video
-                status_2 = False
-            if (status_3):
-                text += '3, '
-                # motor servo jalan
-                # ambil video
-                status_3 = False
-            text += 'telah dilakukan'
-            sent = self.sender.sendMessage(text)
-            status_6 = True
-            sent = self.sender.sendMessage('Ingin Aku mengirimkan Video Dokumentasinya ?..', reply_markup=keyboardO_3)
-            self._editor = telepot.helper.Editor(self.bot, sent)
-            self._edit_msg_ident = telepot.message_identifier(sent)
+            if (status_5 == False) :
+                self.bot.answerCallbackQuery(query_id, text='Ok. Perintah Dijalankan..')
+                self.bot.sender.sendMessage('Pemberian pakan sedang berjalan')
+                status_5 = True
+                text = 'Pemberian Pakan pada Kolam '
+                # ambil Video
+                pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 takeVideo.mp4 -y'
+                p = Popen(shlex.split(pipeline), stdin=DEVNULL, stdout=DEVNULL, stderr=STDOUT)
+                time.sleep(5) #delay mempersiapkan kamera
+                if (status_1):
+                    status_1 = False
+                    text += '1, '
+                    # motor servo jalan
+                if (status_2):
+                    status_2 = False
+                    text += '2, '
+                    # motor servo jalan
+                if (status_3):
+                    status_3 = False
+                    text += '3, '
+                    # motor servo jalan
+                # stop rekam
+                p.terminate()
+                time.sleep(5) # delay endcoding video
+                text += 'telah dilakukan'
+                status_5 = False
+                sent = self.sender.sendMessage(text)
+                status_6 = True
+                sent = self.sender.sendMessage('Ingin Aku mengirimkan Video Dokumentasinya ?..', reply_markup=keyboardO_3)
+            else :
+                self.bot.answerCallbackQuery(query_id, text='Gagal Memberikan Pakan')
+                sent = self.sender.sendMessage('Proses lain sedangan berjalan..')
             self.close()
             
         elif query_data == 'BL':
-            self.bot.answerCallbackQuery(query_id, text='Ok. Perintah Dijalankan..')
             self._cancel_last()
-            self.bot.sender.sendMessage('Pemberian pakan sedang berjalan')
-            text = 'Pemberian Pakan pada Kolam '
-            if (status_1):
-                text += '1, '
-                # motor servo jalan
-                # ambil video
-                status_1 = False
-            if (status_2):
-                text += '2, '
-                # motor servo jalan
-                # ambil video
-                status_2 = False
-            if (status_3):
-                text += '3, '
-                # motor servo jalan
-                # ambil video
-                status_3 = False
-            text += 'telah dilakukan lagi'
-            sent = self.sender.sendMessage(text)
-            status_6 = True
-            self.sender.sendMessage('Ingin Aku mengirimkan Video Dokumentasinya ?..', reply_markup=keyboardO_3)
-            self._editor = telepot.helper.Editor(self.bot, sent)
-            self._edit_msg_ident = telepot.message_identifier(sent)
+            if (status_5 == False) :
+                self.bot.answerCallbackQuery(query_id, text='Ok. Perintah Dijalankan..')
+                self.bot.sender.sendMessage('Pemberian pakan sedang berjalan')
+                status_5 == True
+                text = 'Pemberian Pakan pada Kolam '
+                # ambil Video
+                pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 takeVideo.mp4 -y'
+                p = Popen(shlex.split(pipeline), stdin=DEVNULL, stdout=DEVNULL, stderr=STDOUT)
+                time.sleep(5) #delay mempersiapkan kamera
+                if (status_1):
+                    status_1 = False
+                    text += '1, '
+                    # motor servo jalan
+                if (status_2):
+                    status_2 = False
+                    text += '2, '
+                    # motor servo jalan
+                if (status_3):
+                    status_3 = False
+                    text += '3, '
+                    # motor servo jalan
+                # stop rekam
+                p.terminate()
+                time.sleep(5) # delay endcoding video
+                text += 'telah dilakukan lagi'
+                status_5 = False
+                sent = self.sender.sendMessage(text)
+                status_6 = True
+                self.sender.sendMessage('Ingin Aku mengirimkan Video Dokumentasinya ?..', reply_markup=keyboardO_3)
+            else :
+                self.bot.answerCallbackQuery(query_id, text='Gagal Memberikan Pakan')
+                sent = self.sender.sendMessage('Proses lain sedangan berjalan..')
             self.close()
         
         elif query_data == 'batal':
@@ -1192,21 +1179,44 @@ class Lover(telepot.helper.ChatHandler):
         
         # == Bagian Status ==
         elif query_data == 'AG':
-            statusO_4 = False
-            self.bot.answerCallbackQuery(query_id, text='Ok. Mengambil Gambar')
             self._cancel_last()
-            # ambil gambar kirim
-            sent = self.sender.sendPhoto(open('ambilGambar1.jpg', 'rb'), caption = 'Gambar Kolam 1')
-            sent = self.sender.sendPhoto(open('ambilGambar2.jpg', 'rb'), caption = 'Gambar Kolam 2')
-            sent = self.sender.sendPhoto(open('ambilGambar3.jpg', 'rb'), caption = 'Gambar Kolam 3')
+            if (status_5 == False) :
+                self.bot.answerCallbackQuery(query_id, text='Ok. Mengambil Gambar')
+                status_5 = True
+                # ambil gambar kirim
+                ## motor bergerak ke kolam 1
+                os.system('fswebcam -r 1280x720 --title Gambar-Kolam-1 takeGambar1.jpg')                
+                ## motor bergerak ke kolam 2
+                os.system('fswebcam -r 1280x720 --title Gambar-Kolam-2 takeGambar2.jpg')
+                ## motor bergerak ke kolam 3
+                os.system('fswebcam -r 1280x720 --title Gambar-Kolam-3 takeGambar3.jpg')
+                status_5 = False
+                sent = self.sender.sendPhoto(open('ambilGambar1.jpg', 'rb'), caption = 'Gambar Kolam 1')
+                sent = self.sender.sendPhoto(open('ambilGambar2.jpg', 'rb'), caption = 'Gambar Kolam 2')
+                sent = self.sender.sendPhoto(open('ambilGambar3.jpg', 'rb'), caption = 'Gambar Kolam 3')
+            else :
+                self.bot.answerCallbackQuery(query_id, text='Gagal Mengambil Gambar')
+                sent = self.sender.sendMessage('Proses lain sedangan berjalan..')
             self.close()
         elif query_data == 'AV':
-            statusO_4 = False
-            self.bot.answerCallbackQuery(query_id, text='Ok. Mengambil Video')
             self._cancel_last()
-            # ambil gambar kirim
-            sent = self.sender.sendVideo(open('ambilVideo.mp4', 'rb'), caption = 'Pengambilan Video', supports_streaming=True)
-            self.close()        
+            if (status_5 == False) :
+                self.bot.answerCallbackQuery(query_id, text='Ok. Mengambil Video')
+                status_5 = True
+                # ambil Video
+                pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 takeVideo.mp4 -y'
+                p = Popen(shlex.split(pipeline), stdin=DEVNULL, stdout=DEVNULL, stderr=STDOUT)
+                time.sleep(5) #delay mempersiapkan kamera
+                # motor bergerak dari kolam 1 ke 3
+                # stop rekam
+                p.terminate()
+                time.sleep(5) # delay endcoding video
+                status_5 = False
+                sent = self.sender.sendVideo(open('takeVideo.mp4', 'rb'), caption = 'Pengambilan Video', supports_streaming=True)
+            else :
+                self.bot.answerCallbackQuery(query_id, text='Gagal Mengambil Video')
+                sent = self.sender.sendMessage('Proses lain sedangan berjalan..')
+            self.close()
         # == end Bagian Status ==
         else:
             self.bot.answerCallbackQuery(query_id, text='Ok. Tapi aku akan terus bertanya.')
@@ -1220,7 +1230,7 @@ class Lover(telepot.helper.ChatHandler):
         global status_4
         global status_6
 
-        if statusO_3 == False :
+        if statusO_3 == False and status_5 == False :
             if status_1 or status_2 or status_3 or status_4 :                
                 status_1 = False
                 status_2 = False
@@ -1249,11 +1259,7 @@ print('Listening ...')
 while True:
     
     try:
-                       
-        if status_7 :
-            status_7 = False
-            bot.sendMessage(CHATID, 'Sistem sebelumnya mengalami gangguan sinyal pada '+t+' sampai pesan ini terkirim membuat sistem melakuakan beberapa tindakan secara otomatis, harap untuk memeriksa status kolam anda')        
-
+        
         now = datetime.datetime.now()
         t = now.strftime('%d-%m-%Y di jam %H:%M:%S')
         
@@ -1263,6 +1269,10 @@ while True:
             bootingup = 'Seluruh Pengaturan Telah Diset <i>Default</i> \n'
             bot.sendMessage(CHATID, bootingup, parse_mode='html')
             status_8 = False
+                       
+        if status_7 :
+            status_7 = False
+            bot.sendMessage(CHATID, 'Sistem sebelumnya mengalami gangguan sinyal pada '+t+' sampai pesan ini terkirim membuat sistem melakuakan beberapa tindakan secara otomatis, harap untuk memeriksa status kolam anda')        
             
         print(now.hour,":",now.minute)
         print(jadwal_1,":",jadwal_2,":",jadwal_3,":",takar_1,":",takar_2,":",takar_3,"||",status_1,":",status_2,":",status_3,"||",statusP_1,":",statusP_2,":",statusP_3)
@@ -1274,7 +1284,18 @@ while True:
             if (schedule == 24):
                 schedule = 0
 
-            #ambil Gambar
+            status_5 = True
+            # ambil Gambar
+            ## motor bergerak ke kolam 1            
+            os.system('fswebcam --no-banner -r 1280x720 --title Citra-Kolam-1 ambilGambar1.jpg')
+            # ambil Gambar
+            ## motor bergerak ke kolam 2
+            os.system('fswebcam --no-banner -r 1280x720 --title Citra-Kolam-2 ambilGambar2.jpg')
+            # ambil Gambar
+            ## motor bergerak ke kola 3
+            os.system('fswebcam --no-banner -r 1280x720 --title Citra-Kolam-3 ambilGambar3.jpg')
+            status_5 = False
+            
             from  Pencitraan1 import deteksi1
             if (deteksi1):
                 statusK_1 = False
@@ -1285,7 +1306,6 @@ while True:
                 statusK_1 = True
                 print("tidak Terdeteksi")
                 
-            #ambil Gambar
             from  Pencitraan2 import deteksi2
             if (deteksi2):
                 statusK_2 = False
@@ -1296,7 +1316,6 @@ while True:
                 statusK_2 = True
                 print("tidak Terdeteksi")
                 
-            #ambil Gambar
             from  Pencitraan3 import deteksi3
             if (deteksi3):
                 statusK_3 = False
@@ -1316,46 +1335,76 @@ while True:
                 status_1 = True
                 bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 1 akan dilakukan.. lanjutkan ? \nAku akan melanjutkannya secara otomatis jika Anda tidak membatalkanya..', parse_mode='html', reply_markup=keyboardO_1)
                 time.sleep(600)
-                if(statusO_1):
+                if(statusO_1 and status_5 == False):
                     statusO_3 = False
                     bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 1 sedang berjalan..', reply_markup = keyboardO_2)
+                    status_5 = True
+                    # ambil Video
+                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 takeVideo.mp4 -y'
+                    p = Popen(shlex.split(pipeline), stdin=DEVNULL, stdout=DEVNULL, stderr=STDOUT)
+                    time.sleep(5) #delay mempersiapkan kamera
                     # motor servo jalan berdasarkan kolam 1 takar_1
-                    # ambil viedeo
-                    bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 1 telah dilakukan secara otomatis')
-                    status_6 = True
-                    bot.sendMessage(CHATID, 'Ingin Aku mengirimkan Video Dokumentasinya ?..', reply_markup=keyboardO_3)
+                    # stop rekam
+                    p.terminate()
+                    time.sleep(5) # delay endcoding video
+                    status_5 = False
                     statusP_1 = True
                     status_1 = False
+                    status_6 = True
+                    bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 1 telah dilakukan secara otomatis')
+                    bot.sendMessage(CHATID, 'Ingin Aku mengirimkan Video Dokumentasinya ?..', reply_markup=keyboardO_3)
+                else :
+                    bot.sendMessage(CHATID, 'Pemeberian pakan gagal dijalnkan, Proses lain sedangan berjalan..', reply_markup=keyboardO_1)
             elif (statusP_2 == False and jadwal_2 == now.hour):
                 statusO_3 = True
                 status_2 = True
                 bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 2 akan dilakukan.. lanjutkan ? \nAku akan melanjutkannya secara otomatis jika Anda tidak membatalkanya..', parse_mode='html', reply_markup=keyboardO_1)
                 time.sleep(600)
-                if(statusO_1):
+                if(statusO_1 and status_5 == False):
                     statusO_3 = False
                     bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 2 sedang berjalan..', reply_markup = keyboardO_2)
+                    status_5 = True
+                    # ambil Video
+                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 takeVideo.mp4 -y'
+                    p = Popen(shlex.split(pipeline), stdin=DEVNULL, stdout=DEVNULL, stderr=STDOUT)
+                    time.sleep(5) #delay mempersiapkan kamera
                     # motor servo jalan berdasarkan kolam 2 takar_2
-                    # ambil viedeo
-                    bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 2 telah dilakukan secara otomatis')
-                    status_6 = True
-                    bot.sendMessage(CHATID, 'Ingin Aku mengirimkan Video Dokumentasinya ?..', reply_markup=keyboardO_3)
+                    # stop rekam
+                    p.terminate()
+                    time.sleep(5) # delay endcoding video
+                    status_5 = False
                     statusP_2 = True
                     status_2 = False
+                    status_6 = True
+                    bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 2 telah dilakukan secara otomatis')
+                    bot.sendMessage(CHATID, 'Ingin Aku mengirimkan Video Dokumentasinya ?..', reply_markup=keyboardO_3)
+                else :
+                    bot.sendMessage(CHATID, 'Pemeberian pakan gagal dijalnkan, Proses lain sedangan berjalan..', reply_markup=keyboardO_1)                    
             elif (statusP_3 == False and jadwal_3 == now.hour):
                 statusO_3 = True
                 stauts_3 = True
                 bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 3 akan dilakukan.. lanjutkan ? \nAku akan melanjutkannya secara otomatis jika Anda tidak membatalkanya..', parse_mode='html', reply_markup=keyboardO_1)
                 time.sleep(600)
-                if(statusO_1):
+                if(statusO_1 and status_5 == False):
                     statusO_3 = False
                     bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 3 sedang berjalan..', reply_markup = keyboardO_2)
-                    # motor servo jalan berdasarkan kolam 3 takar_1
-                    # ambil viedeo
-                    bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 3 telah dilakukan secara otomatis')
-                    status_6 = True
-                    bot.sendMessage(CHATID, 'Ingin Aku mengirimkan Video Dokumentasinya ?..', reply_markup=keyboardO_3)
+                    status_5 = True
+                    # ambil Video
+                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 takeVideo.mp4 -y'
+                    p = Popen(shlex.split(pipeline), stdin=DEVNULL, stdout=DEVNULL, stderr=STDOUT)
+                    time.sleep(5) #delay mempersiapkan kamera
+                    # motor servo jalan berdasarkan kolam 3 takar_3
+                    # stop rekam
+                    p.terminate()
+                    time.sleep(5) # delay endcoding video
+                    status_5 = False
                     statusP_3 = True
                     status_3 = False
+                    status_6 = True
+                    bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 3 telah dilakukan secara otomatis')                    
+                    bot.sendMessage(CHATID, 'Ingin Aku mengirimkan Video Dokumentasinya ?..', reply_markup=keyboardO_3)
+                else :
+                    bot.sendMessage(CHATID, 'Pemeberian pakan gagal dijalnkan, Proses lain sedangan berjalan..', reply_markup=keyboardO_1)
         elif jadwal_1 == jadwal_2 and jadwal_1 != jadwal_3 and jadwal_2 != jadwal_3 and statusO_2 :
             print('running2')
             if (statusP_1 == False and statusP_2 == False and jadwal_1 == now.hour):
@@ -1364,63 +1413,103 @@ while True:
                 status_2 = True
                 bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 1 dan 2 akan dilakukan.. lanjutkan ? \nAku akan melanjutkannya secara otomatis jika Anda tidak membatalkanya..', parse_mode='html', reply_markup=keyboardO_1)
                 time.sleep(600)
-                if(statusO_1):
+                if(statusO_1 and status_5 == False):
                     statusO_3 = False
                     bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 1 dan 2 sedang berjalan..', reply_markup = keyboardO_2)
-                    # motor servo jalan berdasarkan kolam 1 takar_1
-                    # ambil viedeo
-                    bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 1 dan 2 telah dilakukan secara otomatis')
-                    status_6 = True
-                    bot.sendMessage(CHATID, 'Ingin Aku mengirimkan Video Dokumentasinya ?..', reply_markup=keyboardO_3)
+                    status_5 = True
+                    # ambil Video
+                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 takeVideo.mp4 -y'
+                    p = Popen(shlex.split(pipeline), stdin=DEVNULL, stdout=DEVNULL, stderr=STDOUT)
+                    time.sleep(5) #delay mempersiapkan kamera
+                    # motor servo jalan berdasarkan kolam dan takar_
+                    # stop rekam
+                    p.terminate()
+                    time.sleep(5) # delay endcoding video
+                    status_5 = False
                     statusP_1 = True
                     statusP_2 = True
                     status_1 = False
                     status_2 = False
+                    status_6 = True
+                    bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 1 dan 2 telah dilakukan secara otomatis')                    
+                    bot.sendMessage(CHATID, 'Ingin Aku mengirimkan Video Dokumentasinya ?..', reply_markup=keyboardO_3)
+                else :
+                    bot.sendMessage(CHATID, 'Pemeberian pakan gagal dijalnkan, Proses lain sedangan berjalan..', reply_markup=keyboardO_1)
             elif (statusP_1 == False and statusP_2 and jadwal_1 == now.hour):
                 statusO_3 = True
                 status_1 = True
                 bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 1 akan dilakukan.. lanjutkan ? \nAku akan melanjutkannya secara otomatis jika Anda tidak membatalkanya..', parse_mode='html', reply_markup=keyboardO_1)
                 time.sleep(600)
-                if(statusO_1):
+                if(statusO_1 and status_5 == False):
                     statusO_3 = False
                     bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 1 sedang berjalan..', reply_markup = keyboardO_2)
-                    # motor servo jalan berdasarkan kolam 1 takar_1
-                    # ambil viedeo
-                    bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 1 telah dilakukan secara otomatis')
-                    status_6 = True
-                    bot.sendMessage(CHATID, 'Ingin Aku mengirimkan Video Dokumentasinya ?..', reply_markup=keyboardO_3)
+                    status_5 = True
+                    # ambil Video
+                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 takeVideo.mp4 -y'
+                    p = Popen(shlex.split(pipeline), stdin=DEVNULL, stdout=DEVNULL, stderr=STDOUT)
+                    time.sleep(5) #delay mempersiapkan kamera
+                    # motor servo jalan berdasarkan kolam dan takar_
+                    # stop rekam
+                    p.terminate()
+                    time.sleep(5) # delay endcoding video
+                    status_5 = False
                     statusP_1 = True
                     status_1 = False
+                    status_6 = True
+                    bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 1 telah dilakukan secara otomatis')                    
+                    bot.sendMessage(CHATID, 'Ingin Aku mengirimkan Video Dokumentasinya ?..', reply_markup=keyboardO_3)
+                else :
+                    bot.sendMessage(CHATID, 'Pemeberian pakan gagal dijalnkan, Proses lain sedangan berjalan..', reply_markup=keyboardO_1)
             elif (statusP_2 == False and statusP_1 and jadwal_2 == now.hour):
                 statusO_3 = True
                 status_2 = True
                 bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 2 akan dilakukan.. lanjutkan ? \nAku akan melanjutkannya secara otomatis jika Anda tidak membatalkanya..', parse_mode='html', reply_markup=keyboardO_1)
                 time.sleep(600)
-                if(statusO_1):
+                if(statusO_1 and status_5 == False):
                     statusO_3 = False
                     bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 2 sedang berjalan..', reply_markup = keyboardO_2)
-                    # motor servo jalan berdasarkan kolam 2 takar_2
-                    # ambil viedeo
-                    bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 2 telah dilakukan secara otomatis')
-                    status_6 = True
-                    bot.sendMessage(CHATID, 'Ingin Aku mengirimkan Video Dokumentasinya ?..', reply_markup=keyboardO_3)
+                    status_5 = True
+                    # ambil Video
+                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 takeVideo.mp4 -y'
+                    p = Popen(shlex.split(pipeline), stdin=DEVNULL, stdout=DEVNULL, stderr=STDOUT)
+                    time.sleep(5) #delay mempersiapkan kamera
+                    # motor servo jalan berdasarkan kolam dan takar_
+                    # stop rekam
+                    p.terminate()
+                    time.sleep(5) # delay endcoding video
+                    status_5 = False
                     statusP_2 = True
                     status_2 = False
+                    status_6 = True
+                    bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 2 telah dilakukan secara otomatis')
+                    bot.sendMessage(CHATID, 'Ingin Aku mengirimkan Video Dokumentasinya ?..', reply_markup=keyboardO_3)
+                else :
+                    bot.sendMessage(CHATID, 'Pemeberian pakan gagal dijalnkan, Proses lain sedangan berjalan..', reply_markup=keyboardO_1)
             elif (statusP_3 == False and jadwal_3 == now.hour):
                 statusO_3 = True
                 stauts_3 = True
                 bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 3 akan dilakukan.. lanjutkan ? \nAku akan melanjutkannya secara otomatis jika Anda tidak membatalkanya..', parse_mode='html', reply_markup=keyboardO_1)
                 time.sleep(600)
-                if(statusO_1):
+                if(statusO_1 and status_5):
                     statusO_3 = False
                     bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 3 sedang berjalan..', reply_markup = keyboardO_2)
-                    # motor servo jalan berdasarkan kolam 3 takar_1
-                    # ambil viedeo
-                    bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 3 telah dilakukan secara otomatis')
-                    status_6 = True
-                    bot.sendMessage(CHATID, 'Ingin Aku mengirimkan Video Dokumentasinya ?..', reply_markup=keyboardO_3)
+                    status_5 = True
+                    # ambil Video
+                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 takeVideo.mp4 -y'
+                    p = Popen(shlex.split(pipeline), stdin=DEVNULL, stdout=DEVNULL, stderr=STDOUT)
+                    time.sleep(5) #delay mempersiapkan kamera
+                    # motor servo jalan berdasarkan kolam dan takar_
+                    # stop rekam
+                    p.terminate()
+                    time.sleep(5) # delay endcoding video
+                    status_5 = False
                     statusP_3 = True
                     status_3 = False
+                    status_6 = True
+                    bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 3 telah dilakukan secara otomatis')                    
+                    bot.sendMessage(CHATID, 'Ingin Aku mengirimkan Video Dokumentasinya ?..', reply_markup=keyboardO_3)
+                else :
+                    bot.sendMessage(CHATID, 'Pemeberian pakan gagal dijalnkan, Proses lain sedangan berjalan..', reply_markup=keyboardO_1)
         elif jadwal_1 != jadwal_2 and jadwal_2 == jadwal_3 and jadwal_1 != jadwal_3 and statusO_2 :
             print('running3')
             if (statusP_2 == False and statusP_3 == False and jadwal_2 == now.hour):
@@ -1429,63 +1518,103 @@ while True:
                 status_2 = True
                 bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 3 dan 2 akan dilakukan.. lanjutkan ? \nAku akan melanjutkannya secara otomatis jika Anda tidak membatalkanya..', parse_mode='html', reply_markup=keyboardO_1)
                 time.sleep(600)
-                if(statusO_1):
+                if(statusO_1 and status_5 == False):
                     statusO_3 = False
                     bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 3 dan 2 sedang berjalan..', reply_markup = keyboardO_2)
-                    # motor servo jalan berdasarkan kolam 1 takar_1
-                    # ambil viedeo
-                    bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 3 dan 2 telah dilakukan secara otomatis')
-                    status_6 = True
-                    bot.sendMessage(CHATID, 'Ingin Aku mengirimkan Video Dokumentasinya ?..', reply_markup=keyboardO_3)
+                    status_5 = True
+                    # ambil Video
+                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 takeVideo.mp4 -y'
+                    p = Popen(shlex.split(pipeline), stdin=DEVNULL, stdout=DEVNULL, stderr=STDOUT)
+                    time.sleep(5) #delay mempersiapkan kamera
+                    # motor servo jalan berdasarkan kolam dan takar_
+                    # stop rekam
+                    p.terminate()
+                    time.sleep(5) # delay endcoding video
+                    status_5 = False
                     statusP_3 = True
                     statusP_2 = True
                     status_2 = False
                     status_3 = False
+                    status_6 = True
+                    bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 3 dan 2 telah dilakukan secara otomatis')                    
+                    bot.sendMessage(CHATID, 'Ingin Aku mengirimkan Video Dokumentasinya ?..', reply_markup=keyboardO_3)
+                else :
+                    bot.sendMessage(CHATID, 'Pemeberian pakan gagal dijalnkan, Proses lain sedangan berjalan..', reply_markup=keyboardO_1)
             elif (statusP_1 == False and jadwal_1 == now.hour):
                 statusO_3 = True
                 status_1 = True
                 bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 1 akan dilakukan.. lanjutkan ? \nAku akan melanjutkannya secara otomatis jika Anda tidak membatalkanya..', parse_mode='html', reply_markup=keyboardO_1)
                 time.sleep(600)
-                if(statusO_1):
+                if(statusO_1 and status_5 == False):
                     statusO_3 = False
                     bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 1 sedang berjalan..', reply_markup = keyboardO_2)
-                    # motor servo jalan berdasarkan kolam 1 takar_1
-                    # ambil viedeo
-                    bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 1 telah dilakukan secara otomatis')
-                    status_6 = True
-                    bot.sendMessage(CHATID, 'Ingin Aku mengirimkan Video Dokumentasinya ?..', reply_markup=keyboardO_3)
+                    status_5 = True
+                    # ambil Video
+                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 takeVideo.mp4 -y'
+                    p = Popen(shlex.split(pipeline), stdin=DEVNULL, stdout=DEVNULL, stderr=STDOUT)
+                    time.sleep(5) #delay mempersiapkan kamera
+                    # motor servo jalan berdasarkan kolam dan takar_
+                    # stop rekam
+                    p.terminate()
+                    time.sleep(5) # delay endcoding video
+                    status_5 = False
                     statusP_1 = True
                     status_1 = False
+                    status_6 = True
+                    bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 1 telah dilakukan secara otomatis')                    
+                    bot.sendMessage(CHATID, 'Ingin Aku mengirimkan Video Dokumentasinya ?..', reply_markup=keyboardO_3)
+                else :
+                    bot.sendMessage(CHATID, 'Pemeberian pakan gagal dijalnkan, Proses lain sedangan berjalan..', reply_markup=keyboardO_1)
             elif (statusP_2 == False and statusP_3 and jadwal_2 == now.hour):
                 statusO_3 = True
                 status_2 = True
                 bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 2 akan dilakukan.. lanjutkan ? \nAku akan melanjutkannya secara otomatis jika Anda tidak membatalkanya..', parse_mode='html', reply_markup=keyboardO_1)
                 time.sleep(600)
-                if(statusO_1):
+                if(statusO_1 and status_5 == False):
                     statusO_3 = False
                     bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 2 sedang berjalan..', reply_markup = keyboardO_2)
-                    # motor servo jalan berdasarkan kolam 2 takar_2
-                    # ambil viedeo
-                    bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 2 telah dilakukan secara otomatis')
-                    status_6 = True
-                    bot.sendMessage(CHATID, 'Ingin Aku mengirimkan Video Dokumentasinya ?..', reply_markup=keyboardO_3)
+                    status_5 = True
+                    # ambil Video
+                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 takeVideo.mp4 -y'
+                    p = Popen(shlex.split(pipeline), stdin=DEVNULL, stdout=DEVNULL, stderr=STDOUT)
+                    time.sleep(5) #delay mempersiapkan kamera
+                    # motor servo jalan berdasarkan kolam dan takar_
+                    # stop rekam
+                    p.terminate()
+                    time.sleep(5) # delay endcoding video
+                    status_5 = False
                     statusP_2 = True
                     status_2 = False
+                    status_6 = True
+                    bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 2 telah dilakukan secara otomatis')                    
+                    bot.sendMessage(CHATID, 'Ingin Aku mengirimkan Video Dokumentasinya ?..', reply_markup=keyboardO_3)
+                else :
+                    bot.sendMessage(CHATID, 'Pemeberian pakan gagal dijalnkan, Proses lain sedangan berjalan..', reply_markup=keyboardO_1)
             elif (statusP_3 == False and statusP_2 and jadwal_3 == now.hour):
                 statusO_3 = True
                 stauts_3 = True
                 bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 3 akan dilakukan.. lanjutkan ? \nAku akan melanjutkannya secara otomatis jika Anda tidak membatalkanya..', parse_mode='html', reply_markup=keyboardO_1)
                 time.sleep(600)
-                if(statusO_1):
+                if(statusO_1 and status_5 == False):
                     statusO_3 = False
                     bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 3 sedang berjalan..', reply_markup = keyboardO_2)
-                    # motor servo jalan berdasarkan kolam 3 takar_1
-                    # ambil viedeo
-                    bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 3 telah dilakukan secara otomatis')
-                    status_6 = True
-                    bot.sendMessage(CHATID, 'Ingin Aku mengirimkan Video Dokumentasinya ?..', reply_markup=keyboardO_3)
+                    status_5 = True
+                    # ambil Video
+                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 takeVideo.mp4 -y'
+                    p = Popen(shlex.split(pipeline), stdin=DEVNULL, stdout=DEVNULL, stderr=STDOUT)
+                    time.sleep(5) #delay mempersiapkan kamera
+                    # motor servo jalan berdasarkan kolam dan takar_
+                    # stop rekam
+                    p.terminate()
+                    time.sleep(5) # delay endcoding video
+                    status_5 = False
                     statusP_3 = True
                     status_3 = False
+                    status_6 = True
+                    bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 3 telah dilakukan secara otomatis')                    
+                    bot.sendMessage(CHATID, 'Ingin Aku mengirimkan Video Dokumentasinya ?..', reply_markup=keyboardO_3)
+                else :
+                    bot.sendMessage(CHATID, 'Pemeberian pakan gagal dijalnkan, Proses lain sedangan berjalan..', reply_markup=keyboardO_1)
         elif jadwal_1 == jadwal_3 and jadwal_3 != jadwal_2 and jadwal_2 != jadwal_1 and statusO_2 :
             print('running4')
             if (statusP_1 == False and statusP_3 == False and jadwal_1 == now.hour):
@@ -1494,63 +1623,103 @@ while True:
                 status_3 = True
                 bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 1 dan 3 akan dilakukan.. lanjutkan ? \nAku akan melanjutkannya secara otomatis jika Anda tidak membatalkanya..', parse_mode='html', reply_markup=keyboardO_1)
                 time.sleep(600)
-                if(statusO_1):
+                if(statusO_1 and status_5 == False):
                     statusO_3 = False
                     bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 1 dan 3 sedang berjalan..', reply_markup = keyboardO_2)
-                    # motor servo jalan berdasarkan kolam 1 takar_1
-                    # ambil viedeo
-                    bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 1 dan 3 telah dilakukan secara otomatis')
-                    status_6 = True
-                    bot.sendMessage(CHATID, 'Ingin Aku mengirimkan Video Dokumentasinya ?..', reply_markup=keyboardO_3)
+                    status_5 = True
+                    # ambil Video
+                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 takeVideo.mp4 -y'
+                    p = Popen(shlex.split(pipeline), stdin=DEVNULL, stdout=DEVNULL, stderr=STDOUT)
+                    time.sleep(5) #delay mempersiapkan kamera
+                    # motor servo jalan berdasarkan kolam dan takar_
+                    # stop rekam
+                    p.terminate()
+                    time.sleep(5) # delay endcoding video
+                    status_5 = False
                     statusP_1 = True
                     statusP_3 = True
                     status_1 = False
                     status_3 = False
+                    status_6 = True
+                    bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 1 dan 3 telah dilakukan secara otomatis')                    
+                    bot.sendMessage(CHATID, 'Ingin Aku mengirimkan Video Dokumentasinya ?..', reply_markup=keyboardO_3)
+                else :
+                    bot.sendMessage(CHATID, 'Pemeberian pakan gagal dijalnkan, Proses lain sedangan berjalan..', reply_markup=keyboardO_1)                    
             elif (statusP_1 == False and statusP_3 and jadwal_1 == now.hour):
                 statusO_3 = True
                 status_1 = True
                 bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 1 akan dilakukan.. lanjutkan ? \nAku akan melanjutkannya secara otomatis jika Anda tidak membatalkanya..', parse_mode='html', reply_markup=keyboardO_1)
                 time.sleep(600)
-                if(statusO_1):
+                if(statusO_1 and status_5 == False):
                     statusO_3 = False
                     bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 1 sedang berjalan..', reply_markup = keyboardO_2)
-                    # motor servo jalan berdasarkan kolam 1 takar_1
-                    # ambil viedeo
-                    bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 1 telah dilakukan secara otomatis')
-                    status_6 = True
-                    bot.sendMessage(CHATID, 'Ingin Aku mengirimkan Video Dokumentasinya ?..', reply_markup=keyboardO_3)
+                    status_5 = True
+                    # ambil Video
+                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 takeVideo.mp4 -y'
+                    p = Popen(shlex.split(pipeline), stdin=DEVNULL, stdout=DEVNULL, stderr=STDOUT)
+                    time.sleep(5) #delay mempersiapkan kamera
+                    # motor servo jalan berdasarkan kolam dan takar_
+                    # stop rekam
+                    p.terminate()
+                    time.sleep(5) # delay endcoding video
+                    status_5 = False
                     statusP_1 = True
                     status_1 = False
+                    status_6 = True
+                    bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 1 telah dilakukan secara otomatis')                    
+                    bot.sendMessage(CHATID, 'Ingin Aku mengirimkan Video Dokumentasinya ?..', reply_markup=keyboardO_3)
+                else :
+                    bot.sendMessage(CHATID, 'Pemeberian pakan gagal dijalnkan, Proses lain sedangan berjalan..', reply_markup=keyboardO_1)
             elif (statusP_2 == False and jadwal_2 == now.hour):
                 statusO_3 = True
                 status_2 = True
                 bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 2 akan dilakukan.. lanjutkan ? \nAku akan melanjutkannya secara otomatis jika Anda tidak membatalkanya..', parse_mode='html', reply_markup=keyboardO_1)
                 time.sleep(600)
-                if(statusO_1):
+                if(statusO_1 and status_5 == False):
                     statusO_3 = False
                     bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 2 sedang berjalan..', reply_markup = keyboardO_2)
-                    # motor servo jalan berdasarkan kolam 2 takar_2
-                    # ambil viedeo
-                    bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 2 telah dilakukan secara otomatis')
-                    status_6 = True
-                    bot.sendMessage(CHATID, 'Ingin Aku mengirimkan Video Dokumentasinya ?..', reply_markup=keyboardO_3)
+                    status_5 = True
+                    # ambil Video
+                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 takeVideo.mp4 -y'
+                    p = Popen(shlex.split(pipeline), stdin=DEVNULL, stdout=DEVNULL, stderr=STDOUT)
+                    time.sleep(5) #delay mempersiapkan kamera
+                    # motor servo jalan berdasarkan kolam dan takar_
+                    # stop rekam
+                    p.terminate()
+                    time.sleep(5) # delay endcoding video
+                    status_5 = False
                     statusP_2 = True
                     status_2 = False
+                    status_6 = True
+                    bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 2 telah dilakukan secara otomatis')                    
+                    bot.sendMessage(CHATID, 'Ingin Aku mengirimkan Video Dokumentasinya ?..', reply_markup=keyboardO_3)
+                else :
+                    bot.sendMessage(CHATID, 'Pemeberian pakan gagal dijalnkan, Proses lain sedangan berjalan..', reply_markup=keyboardO_1)
             elif (statusP_3 == False and statusP_1 and jadwal_3 == now.hour):
                 statusO_3 = True
                 stauts_3 = True
                 bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 3 akan dilakukan.. lanjutkan ? \nAku akan melanjutkannya secara otomatis jika Anda tidak membatalkanya..', parse_mode='html', reply_markup=keyboardO_1)
                 time.sleep(600)
-                if(statusO_1):
+                if(statusO_1 and status_5 == False):
                     statusO_3 = False
                     bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 3 sedang berjalan..', reply_markup = keyboardO_2)
-                    # motor servo jalan berdasarkan kolam 3 takar_1
-                    # ambil viedeo
-                    bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 3 telah dilakukan secara otomatis')
-                    status_6 = True
-                    bot.sendMessage(CHATID, 'Ingin Aku mengirimkan Video Dokumentasinya ?..', reply_markup=keyboardO_3)
+                    status_5 = True
+                    # ambil Video
+                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 takeVideo.mp4 -y'
+                    p = Popen(shlex.split(pipeline), stdin=DEVNULL, stdout=DEVNULL, stderr=STDOUT)
+                    time.sleep(5) #delay mempersiapkan kamera
+                    # motor servo jalan berdasarkan kolam dan takar_
+                    # stop rekam
+                    p.terminate()
+                    time.sleep(5) # delay endcoding video
+                    status_5 = False
                     statusP_3 = True
-                    status_3 = False                
+                    status_3 = False
+                    status_6 = True
+                    bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 3 telah dilakukan secara otomatis')                    
+                    bot.sendMessage(CHATID, 'Ingin Aku mengirimkan Video Dokumentasinya ?..', reply_markup=keyboardO_3)
+                else :
+                    bot.sendMessage(CHATID, 'Pemeberian pakan gagal dijalnkan, Proses lain sedangan berjalan..', reply_markup=keyboardO_1)                
         elif jadwal_1 == jadwal_3 and jadwal_3 == jadwal_2 and statusO_2 :
             print('running5')
             if (statusP_1 == False and jadwal_1 == now.hour):
@@ -1560,20 +1729,30 @@ while True:
                 status_3 = True
                 bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 1, 2 dan 3 akan dilakukan.. lanjutkan ? \nAku akan melanjutkannya secara otomatis jika Anda tidak membatalkanya..', parse_mode='html', reply_markup=keyboardO_1)
                 time.sleep(600)
-                if(statusO_1):
+                if(statusO_1 and status_5 == False):
                     statusO_3 = False
                     bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 1, 2 dan 3 sedang berjalan..', reply_markup = keyboardO_2)
-                    # motor servo jalan berdasarkan kolam 1 takar_1
-                    # ambil viedeo
-                    bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 1, 2 dan 3 telah dilakukan secara otomatis')
-                    status_6 = True
-                    bot.sendMessage(CHATID, 'Ingin Aku mengirimkan Video Dokumentasinya ?..', reply_markup=keyboardO_3)
+                    status_5 = True
+                    # ambil Video
+                    pipeline = 'ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 takeVideo.mp4 -y'
+                    p = Popen(shlex.split(pipeline), stdin=DEVNULL, stdout=DEVNULL, stderr=STDOUT)
+                    time.sleep(5) #delay mempersiapkan kamera
+                    # motor servo jalan berdasarkan kolam dan takar_
+                    # stop rekam
+                    p.terminate()
+                    time.sleep(5) # delay endcoding video
+                    status_5 = False
                     statusP_1 = True
                     statusP_2 = True
                     statusP_3 = True
                     status_1 = False
                     status_2 = False
                     status_3 = False
+                    status_6 = True
+                    bot.sendMessage(CHATID, 'Pemberian Pakan pada Kolam 1, 2 dan 3 telah dilakukan secara otomatis')                    
+                    bot.sendMessage(CHATID, 'Ingin Aku mengirimkan Video Dokumentasinya ?..', reply_markup=keyboardO_3)                    
+                else :
+                    bot.sendMessage(CHATID, 'Pemeberian pakan gagal dijalnkan, Proses lain sedangan berjalan..', reply_markup=keyboardO_1)
                     
         # == end Pembarian Pakan Otomatis ==
         
@@ -1593,7 +1772,18 @@ while True:
             if (schedule == 24):
                 schedule = 0
 
-            #ambil Gambar
+            status_5 = True
+            # ambil Gambar
+            ## motor bergerak ke kolam 1
+            os.system('fswebcam --no-banner -r 1280x720 --title Citra-Kolam-1 ambilGambar1.jpg')
+            # ambil Gambar
+            ## motor bergerak ke kolam 2
+            os.system('fswebcam --no-banner -r 1280x720 --title Citra-Kolam-2 ambilGambar2.jpg')
+            # ambil Gambar
+            ## motor bergerak ke kolam 3
+            os.system('fswebcam --no-banner -r 1280x720 --title Citra-Kolam-3 ambilGambar3.jpg')
+            status_5 = False
+            
             from  Pencitraan1 import deteksi1
             if (deteksi1):
                 statusK_1 = False
@@ -1601,8 +1791,7 @@ while True:
             else :
                 statusK_1 = True
                 print("tidak Terdeteksi")
-                
-            #ambil Gambar
+                            
             from  Pencitraan2 import deteksi2
             if (deteksi2):
                 statusK_2 = False
@@ -1611,7 +1800,6 @@ while True:
                 statusK_2 = True
                 print("tidak Terdeteksi")
                 
-            #ambil Gambar
             from  Pencitraan3 import deteksi3
             if (deteksi3):
                 statusK_3 = False
@@ -1627,27 +1815,33 @@ while True:
             if (statusP_1 == False and jadwal_1 == now.hour):
                 statusO_3 = True
                 status_1 = True
-                if(statusO_1):
+                if(statusO_1 and status_5 == False):
                     statusO_3 = False
+                    status_5 = True
                     # motor servo jalan berdasarkan kolam 1 takar_1
+                    status_5 = False
                     status_6 = True
                     statusP_1 = True
                     status_1 = False
             elif (statusP_2 == False and jadwal_2 == now.hour):
                 statusO_3 = True
                 status_2 = True
-                if(statusO_1):
+                if(statusO_1 and status_5 == False):
                     statusO_3 = False
+                    status_5 = True
                     # motor servo jalan berdasarkan kolam 2 takar_2
+                    status_5 = False
                     status_6 = True
                     statusP_2 = True
                     status_2 = False
             elif (statusP_3 == False and jadwal_3 == now.hour):
                 statusO_3 = True
                 stauts_3 = True
-                if(statusO_1):
+                if(statusO_1 and status_5 == False):
                     statusO_3 = False
+                    status_5 = True
                     # motor servo jalan berdasarkan kolam 3 takar_1
+                    status_5 = False
                     status_6 = True
                     statusP_3 = True
                     status_3 = False
@@ -1657,9 +1851,11 @@ while True:
                 statusO_3 = True
                 status_1 = True
                 status_2 = True
-                if(statusO_1):
+                if(statusO_1 and status_5 == False):
                     statusO_3 = False
+                    status_5 = True
                     # motor servo jalan berdasarkan kolam 1 takar_1
+                    status_5 = False
                     status_6 = True
                     statusP_1 = True
                     statusP_2 = True
@@ -1668,16 +1864,18 @@ while True:
             elif (statusP_1 == False and statusP_2 and jadwal_1 == now.hour):
                 statusO_3 = True
                 status_1 = True
-                if(statusO_1):
+                if(statusO_1 and status_5 == False):
                     statusO_3 = False
+                    status_5 = True
                     # motor servo jalan berdasarkan kolam 1 takar_1
+                    status_5 = False
                     status_6 = True
                     statusP_1 = True
                     status_1 = False
             elif (statusP_2 == False and statusP_1 and jadwal_2 == now.hour):
                 statusO_3 = True
                 status_2 = True
-                if(statusO_1):
+                if(statusO_1 and status_5 == False):
                     statusO_3 = False
                     # motor servo jalan berdasarkan kolam 2 takar_2
                     status_6 = True
@@ -1686,9 +1884,11 @@ while True:
             elif (statusP_3 == False and jadwal_3 == now.hour):
                 statusO_3 = True
                 stauts_3 = True
-                if(statusO_1):
+                if(statusO_1 and status_5 == False):
                     statusO_3 = False
+                    status_5 = True
                     # motor servo jalan berdasarkan kolam 3 takar_1
+                    status_5 = False
                     status_6 = True
                     statusP_3 = True
                     status_3 = False
@@ -1698,9 +1898,11 @@ while True:
                 statusO_3 = True
                 status_3 = True
                 status_2 = True
-                if(statusO_1):
+                if(statusO_1 and status_5 == False):
                     statusO_3 = False
+                    status_5 = True
                     # motor servo jalan berdasarkan kolam 1 takar_1
+                    status_5 = False
                     status_6 = True
                     statusP_3 = True
                     statusP_2 = True
@@ -1709,27 +1911,33 @@ while True:
             elif (statusP_1 == False and jadwal_1 == now.hour):
                 statusO_3 = True
                 status_1 = True
-                if(statusO_1):
+                if(statusO_1 and status_5 == False):
                     statusO_3 = False
+                    status_5 = True
                     # motor servo jalan berdasarkan kolam 1 takar_1
+                    status_5 = False
                     status_6 = True
                     statusP_1 = True
                     status_1 = False
             elif (statusP_2 == False and statusP_3 and jadwal_2 == now.hour):
                 statusO_3 = True
                 status_2 = True
-                if(statusO_1):
+                if(statusO_1 and status_5 == False):
                     statusO_3 = False
+                    status_5 = True
                     # motor servo jalan berdasarkan kolam 2 takar_2
+                    status_5 = False
                     status_6 = True
                     statusP_2 = True
                     status_2 = False
             elif (statusP_3 == False and statusP_2 and jadwal_3 == now.hour):
                 statusO_3 = True
                 stauts_3 = True
-                if(statusO_1):
+                if(statusO_1 and status_5 == False):
                     statusO_3 = False
+                    status_5 = True
                     # motor servo jalan berdasarkan kolam 3 takar_1
+                    status_5 = False
                     status_6 = True
                     statusP_3 = True
                     status_3 = False
@@ -1739,9 +1947,11 @@ while True:
                 statusO_3 = True
                 status_1 = True
                 status_3 = True
-                if(statusO_1):
+                if(statusO_1 and status_5 == False):
                     statusO_3 = False
+                    status_5 = True
                     # motor servo jalan berdasarkan kolam 1 takar_1
+                    status_5 = False
                     status_6 = True
                     statusP_1 = True
                     statusP_3 = True
@@ -1750,28 +1960,34 @@ while True:
             elif (statusP_1 == False and statusP_3 and jadwal_1 == now.hour):
                 statusO_3 = True
                 status_1 = True
-                if(statusO_1):
+                if(statusO_1 and status_5 == False):
                     statusO_3 = False
+                    status_5 = True
                     # motor servo jalan berdasarkan kolam 1 takar_1
+                    status_5 = FAlse
                     status_6 = True
                     statusP_1 = True
                     status_1 = False
             elif (statusP_2 == False and jadwal_2 == now.hour):
                 statusO_3 = True
                 status_2 = True
-                if(statusO_1):
+                if(statusO_1 and status_5 == False):
                     statusO_3 = False
+                    status_5 = True
                     # motor servo jalan berdasarkan kolam 2 takar_2
                     # ambil viedeo
+                    status_5 = False
                     status_6 = True
                     statusP_2 = True
                     status_2 = False
             elif (statusP_3 == False and statusP_1 and jadwal_3 == now.hour):
                 statusO_3 = True
                 stauts_3 = True
-                if(statusO_1):
+                if(statusO_1 and status_5 == False):
                     statusO_3 = False
+                    status_5 = True
                     # motor servo jalan berdasarkan kolam 3 takar_1
+                    status_5 = False
                     status_6 = True
                     statusP_3 = True
                     status_3 = False                
@@ -1782,9 +1998,11 @@ while True:
                 status_1 = True
                 status_2 = True
                 status_3 = True
-                if(statusO_1):
+                if(statusO_1 and status_5 == False):
                     statusO_3 = False
+                    status_5 = True
                     # motor servo jalan berdasarkan kolam 1 takar_1
+                    status_5 = False
                     status_6 = True
                     statusP_1 = True
                     statusP_2 = True
@@ -1795,3 +2013,4 @@ while True:
                     
         # == end Pembarian Pakan Otomatis ==                
     time.sleep(60)
+
